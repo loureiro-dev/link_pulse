@@ -2,8 +2,8 @@ import requests
 from datetime import datetime
 import os
 
-TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "")
-TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID", "")
+TELEGRAM_BOT_TOKEN = os.getenv("8092102779:AAE-4GFgxheLkcXcbmC3-KlNRIH4jzGdl0c)
+TELEGRAM_CHAT_ID = os.getenv("954773903")
 
 def send_message(link, source):
     """Envia notificação formatada para o Telegram"""

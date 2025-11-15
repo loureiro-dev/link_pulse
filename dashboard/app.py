@@ -163,7 +163,7 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-st.markdown("<div class='title'>🚀 WhatsApp Link Intelligence</div>", unsafe_allow_html=True)
+st.markdown("<div class='title'>🚀 Captura de WhatsApp Intelligence</div>", unsafe_allow_html=True)
 st.write("Painel para monitoramento de links de grupos do WhatsApp — adicione páginas, rode a coleta e receba relatórios.")
 
 # TOP ROW: metrics and last run
@@ -268,6 +268,24 @@ Forneça exemplos de regex, trechos de código em Python (requests + BeautifulSo
 
 st.write("---")
 
+# Add new page form
+st.subheader("Adicionar nova página")
+
+with st.form("add_form"):
+    in_url = st.text_input("URL")
+    in_name = st.text_input("Nome da campanha")
+    add_sub = st.form_submit_button("Adicionar")
+    if add_sub:
+        if in_url.strip() and in_name.strip():
+            ok = save_page(in_url.strip(), in_name.strip())
+            if ok:
+                st.success("Página adicionada.")
+            else:
+                st.info("URL já cadastrada.")
+        else:
+            st.error("Preencha URL e Nome.")
+st.write("---")
+
 # Pages management: add/update/delete
 st.subheader("Gerenciar páginas de captura")
 
@@ -299,26 +317,7 @@ with st.form("edit_form"):
 
 st.write("---")
 
-# Add new page form
-st.subheader("Adicionar nova página")
-
-with st.form("add_form"):
-    in_url = st.text_input("URL")
-    in_name = st.text_input("Nome da campanha")
-    add_sub = st.form_submit_button("Adicionar")
-    if add_sub:
-        if in_url.strip() and in_name.strip():
-            ok = save_page(in_url.strip(), in_name.strip())
-            if ok:
-                st.success("Página adicionada.")
-            else:
-                st.info("URL já cadastrada.")
-        else:
-            st.error("Preencha URL e Nome.")
-
-st.write("---")
-
 # footer
 st.markdown("### Status & Ajuda")
 st.write(f"Data/hora local: {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}")
-st.write("Se quiser, posso adicionar export de logs, autenticação, ou deploy em Heroku/Render.")
+st.write("Próximas Atualizações, adicionar export de logs, autenticação, ou deploy em Heroku/Render.")
