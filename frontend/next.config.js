@@ -4,6 +4,8 @@ const nextConfig = {
   env: {
     NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000',
   },
+  // Configuração para Vercel
+  output: 'standalone',
 }
 
 export default nextConfig

@@ -151,7 +151,7 @@ export async function getCurrentUser(): Promise<User | null> {
     
     // Ensure is_admin is boolean
     if (user && 'is_admin' in user) {
-      user.is_admin = user.is_admin === true || user.is_admin === 1 || user.is_admin === '1';
+      user.is_admin = user.is_admin === true || (typeof user.is_admin === 'number' && user.is_admin === 1) || (typeof user.is_admin === 'string' && user.is_admin === '1');
     }
     
     return user;

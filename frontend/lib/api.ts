@@ -79,10 +79,10 @@ async function fetchApi(endpoint: string, options: RequestInit = {}) {
   
   // Get token from cookie if available
   const token = getToken();
-  const headers: HeadersInit = {
+  const headers: Record<string, string> = {
     'Accept': 'application/json',
     'Content-Type': 'application/json',
-    ...options.headers,
+    ...(options.headers as Record<string, string> || {}),
   };
   
   // Add Authorization header if token exists

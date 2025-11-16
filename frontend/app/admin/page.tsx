@@ -35,7 +35,7 @@ export default function AdminPage() {
       }
       
       // Check is_admin - handle both boolean and number (1/0)
-      const isAdmin = user.is_admin === true || user.is_admin === 1 || user.is_admin === '1';
+      const isAdmin = user.is_admin === true || (typeof user.is_admin === 'number' && user.is_admin === 1) || (typeof user.is_admin === 'string' && user.is_admin === '1');
       console.log('Admin page - Final isAdmin check:', isAdmin);
       
       if (!isAdmin) {

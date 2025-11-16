@@ -61,9 +61,15 @@ app = FastAPI(
 )
 
 # Configura CORS para permitir requisições do frontend
+# Em produção, aceita URL do frontend via variável de ambiente
+cors_origins = os.getenv("CORS_ORIGINS", "*").split(",")
+if cors_origins == ["*"] and os.getenv("FRONTEND_URL"):
+    # Se FRONTEND_URL estiver definida, usa ela em vez de "*"
+    cors_origins = [os.getenv("FRONTEND_URL")]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Permite todas as origens para desenvolvimento
+    allow_origins=cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -238,5 +244,7 @@ async def root():
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    # Lê porta do ambiente (Render usa PORT) ou usa 8000 como padrão
+    port = int(os.getenv("PORT", 8000))
+    uvicorn.run(app, host="0.0.0.0", port=port)
 
