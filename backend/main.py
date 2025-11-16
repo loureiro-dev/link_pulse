@@ -37,8 +37,9 @@ for p in [BACKEND_ROOT, ROOT, SRC_ROOT]:
 
 # Import database functions from new location
 from backend.db.connection import save_links, list_links, init_db
-from src.collectors.requests_collector import collect_from_page
-from src.processing.cleaning import normalize_whatsapp_link, is_group_link
+# Import services from new location
+from backend.services.collectors.requests_collector import collect_from_page
+from backend.services.processing.cleaning import normalize_whatsapp_link, is_group_link
 
 # ============================
 # CONFIGURAÇÃO DE PATHS
