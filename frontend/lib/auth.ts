@@ -3,7 +3,7 @@
  * Handles login, registration, token management, and authentication state
  */
 
-import Cookies from 'js-cookie';
+import { getCookie, setCookie, deleteCookie } from 'cookies-next';
 
 const TOKEN_COOKIE_NAME = 'linkpulse_token';
 const TOKEN_EXPIRY_DAYS = 7;
@@ -60,8 +60,8 @@ export async function login(credentials: LoginCredentials): Promise<AuthResponse
   const data: AuthResponse = await response.json();
   
   // Store token in cookie
-  Cookies.set(TOKEN_COOKIE_NAME, data.access_token, {
-    expires: TOKEN_EXPIRY_DAYS,
+  setCookie(TOKEN_COOKIE_NAME, data.access_token, {
+    maxAge: TOKEN_EXPIRY_DAYS * 24 * 60 * 60, // Convert days to seconds
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax',
   });
@@ -102,14 +102,15 @@ export async function register(userData: RegisterData): Promise<{ user: User; to
  * Logout user (remove token from cookie)
  */
 export function logout(): void {
-  Cookies.remove(TOKEN_COOKIE_NAME);
+  deleteCookie(TOKEN_COOKIE_NAME);
 }
 
 /**
  * Get stored token from cookie
  */
 export function getToken(): string | undefined {
-  return Cookies.get(TOKEN_COOKIE_NAME);
+  const token = getCookie(TOKEN_COOKIE_NAME);
+  return typeof token === 'string' ? token : undefined;
 }
 
 /**
@@ -147,4 +148,5 @@ export async function getCurrentUser(): Promise<User | null> {
     return null;
   }
 }
+
 
