@@ -72,6 +72,12 @@ app.add_middleware(
 # Inicializa o banco de dados
 init_db()
 
+# Importa router de autenticação
+from backend.auth.routes import router as auth_router
+
+# Flag para controlar proteção de rotas (para migração gradual)
+PROTECTED_ROUTES = False  # Mudar para True quando frontend estiver pronto
+
 # ============================================================================
 # Modelos Pydantic para validação de dados
 # ============================================================================
@@ -210,6 +216,9 @@ def send_telegram_message(link: str, source: str):
 # ============================================================================
 # Endpoints da API
 # ============================================================================
+
+# Inclui router de autenticação
+app.include_router(auth_router)
 
 @app.get("/")
 async def root():
