@@ -56,6 +56,9 @@ async def get_current_user_from_token(token: str) -> dict:
     # Always use is_admin from database (more reliable than token)
     # Token may be outdated if user was promoted to admin after login
     # Database is the source of truth
+    # Ensure is_admin is always a boolean
+    user["is_admin"] = bool(user.get("is_admin", False))
+    user["approved"] = bool(user.get("approved", False))
     
     return user
 

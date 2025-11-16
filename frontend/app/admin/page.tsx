@@ -23,13 +23,26 @@ export default function AdminPage() {
   const checkAdminAccess = async () => {
     try {
       const user = await getCurrentUser();
-      if (!user || !user.is_admin) {
+      console.log('Admin page - Current user:', user);
+      console.log('Admin page - is_admin:', user?.is_admin);
+      
+      if (!user) {
+        console.log('Admin page - No user, redirecting to login');
+        router.push('/login');
+        return;
+      }
+      
+      if (!user.is_admin) {
+        console.log('Admin page - User is not admin, redirecting to dashboard');
         router.push('/dashboard');
         return;
       }
+      
+      console.log('Admin page - User is admin, loading users');
       setCurrentUser(user);
       loadUsers();
     } catch (err) {
+      console.error('Admin page - Error checking access:', err);
       router.push('/dashboard');
     }
   };
