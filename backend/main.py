@@ -168,9 +168,16 @@ def send_telegram_message(link: str, source: str):
     """Envia notificação para o Telegram"""
     import requests
     
-    config = load_config()
-    token = config.get("telegram", {}).get("bot_token", "").strip()
-    chat_id = config.get("telegram", {}).get("chat_id", "").strip()
+    # Prioriza variáveis de ambiente (padrão em PaaS como Render)
+    # Fallback para arquivo de configuração (desenvolvimento local)
+    token = os.getenv("TELEGRAM_BOT_TOKEN", "").strip()
+    chat_id = os.getenv("TELEGRAM_CHAT_ID", "").strip()
+    
+    # Se não tiver nas variáveis de ambiente, tenta arquivo de config
+    if not token or not chat_id:
+        config = load_config()
+        token = token or config.get("telegram", {}).get("bot_token", "").strip()
+        chat_id = chat_id or config.get("telegram", {}).get("chat_id", "").strip()
     
     if not token or not chat_id:
         write_log("Telegram não configurado - pulando envio")
