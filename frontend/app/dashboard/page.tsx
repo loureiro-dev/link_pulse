@@ -5,13 +5,16 @@ import { getLinks, getStats, Link, Stats } from '@/lib/api';
 import StatsCard from '@/components/StatsCard';
 import LinksTable from '@/components/LinksTable';
 import ChartsSection from '@/components/ChartsSection';
-import { Link as LinkIcon, Users, FileText, Activity, TrendingUp } from 'lucide-react';
+import { Link as LinkIcon, Users, FileText, Activity, TrendingUp, Shield } from 'lucide-react';
+import { getCurrentUser } from '@/lib/auth';
+import NextLink from 'next/link';
 
 export default function DashboardPage() {
   const [links, setLinks] = useState<Link[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [currentUser, setCurrentUser] = useState<{ is_admin?: boolean } | null>(null);
 
   const loadData = async () => {
     try {
@@ -52,6 +55,15 @@ export default function DashboardPage() {
     return () => clearInterval(interval);
   }, []);
 
+  useEffect(() => {
+    // Load current user to check if admin
+    getCurrentUser().then(user => {
+      if (user) {
+        setCurrentUser(user);
+      }
+    });
+  }, []);
+
   if (loading && !stats) {
     return (
       <div className="flex items-center justify-center h-full">
@@ -66,11 +78,22 @@ export default function DashboardPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Dashboard</h1>
-        <p className="text-gray-600 dark:text-gray-400 mt-1">
-          Visão geral do sistema de monitoramento
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Dashboard</h1>
+          <p className="text-gray-600 dark:text-gray-400 mt-1">
+            Visão geral do sistema de monitoramento
+          </p>
+        </div>
+        {currentUser?.is_admin && (
+          <NextLink
+            href="/admin"
+            className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors shadow-md"
+          >
+            <Shield className="w-5 h-5" />
+            <span>Painel de Administração</span>
+          </NextLink>
+        )}
       </div>
 
       {/* Error Message */}
