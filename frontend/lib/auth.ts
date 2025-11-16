@@ -144,7 +144,17 @@ export async function getCurrentUser(): Promise<User | null> {
       return null;
     }
 
-    return await response.json();
+    const user = await response.json();
+    console.log('getCurrentUser - Response from API:', user);
+    console.log('getCurrentUser - is_admin value:', user?.is_admin);
+    console.log('getCurrentUser - is_admin type:', typeof user?.is_admin);
+    
+    // Ensure is_admin is boolean
+    if (user && 'is_admin' in user) {
+      user.is_admin = user.is_admin === true || user.is_admin === 1 || user.is_admin === '1';
+    }
+    
+    return user;
   } catch (error) {
     console.error('Error fetching current user:', error);
     return null;
