@@ -7,7 +7,7 @@ import os
 import sys
 import json
 from datetime import datetime
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List, Optional
@@ -74,9 +74,12 @@ init_db()
 
 # Importa router de autenticação
 from backend.auth.routes import router as auth_router
+# Importa middleware de autenticação para proteger rotas
+from backend.auth.middleware import get_current_user
 
 # Flag para controlar proteção de rotas (para migração gradual)
-PROTECTED_ROUTES = False  # Mudar para True quando frontend estiver pronto
+# Agora que o frontend está pronto, podemos proteger as rotas
+PROTECTED_ROUTES = True  # Frontend já está implementado
 
 # ============================================================================
 # Modelos Pydantic para validação de dados
@@ -230,7 +233,7 @@ async def root():
     }
 
 @app.get("/api/links", response_model=List[LinkResponse])
-async def get_links(limit: int = 1000):
+async def get_links(limit: int = 1000, current_user: dict = Depends(get_current_user)):
     """
     Retorna a lista de links coletados
     Parâmetro limit controla quantos links retornar (padrão: 1000)
@@ -246,7 +249,7 @@ async def get_links(limit: int = 1000):
         raise HTTPException(status_code=500, detail=f"Erro ao buscar links: {str(e)}")
 
 @app.get("/api/pages", response_model=List[PageResponse])
-async def get_pages():
+async def get_pages(current_user: dict = Depends(get_current_user)):
     """Retorna todas as páginas cadastradas para monitoramento"""
     try:
         pages = load_pages()
@@ -255,7 +258,7 @@ async def get_pages():
         raise HTTPException(status_code=500, detail=f"Erro ao buscar páginas: {str(e)}")
 
 @app.post("/api/pages", response_model=PageResponse)
-async def create_page(page: PageRequest):
+async def create_page(page: PageRequest, current_user: dict = Depends(get_current_user)):
     """Adiciona uma nova página para monitoramento"""
     try:
         pages = load_pages()
@@ -277,7 +280,7 @@ async def create_page(page: PageRequest):
         raise HTTPException(status_code=500, detail=f"Erro ao criar página: {str(e)}")
 
 @app.delete("/api/pages")
-async def delete_page(url: str):
+async def delete_page(url: str, current_user: dict = Depends(get_current_user)):
     """Remove uma página do monitoramento"""
     try:
         pages = load_pages()
@@ -296,7 +299,7 @@ async def delete_page(url: str):
         raise HTTPException(status_code=500, detail=f"Erro ao excluir página: {str(e)}")
 
 @app.post("/api/scraper/run", response_model=ScraperResponse)
-async def run_scraper():
+async def run_scraper(current_user: dict = Depends(get_current_user)):
     """
     Executa o scraper em todas as páginas cadastradas
     Retorna os links encontrados e estatísticas da execução
@@ -375,7 +378,7 @@ async def run_scraper():
         raise HTTPException(status_code=500, detail=f"Erro ao executar scraper: {str(e)}")
 
 @app.get("/api/scraper/last-run")
-async def get_last_run():
+async def get_last_run(current_user: dict = Depends(get_current_user)):
     """Retorna informações da última execução do scraper"""
     try:
         if not os.path.exists(LAST_RUN_FILE):
@@ -388,7 +391,7 @@ async def get_last_run():
         return {"last_run": f"Erro ao ler: {str(e)}"}
 
 @app.get("/api/telegram/config")
-async def get_telegram_config():
+async def get_telegram_config(current_user: dict = Depends(get_current_user)):
     """Retorna a configuração atual do Telegram"""
     config = load_config()
     telegram_config = config.get("telegram", {})
@@ -399,7 +402,7 @@ async def get_telegram_config():
     }
 
 @app.post("/api/telegram/save")
-async def save_telegram_config(config: TelegramConfig):
+async def save_telegram_config(config: TelegramConfig, current_user: dict = Depends(get_current_user)):
     """Salva a configuração do Telegram"""
     try:
         current_config = load_config()
@@ -419,7 +422,7 @@ async def save_telegram_config(config: TelegramConfig):
         raise HTTPException(status_code=500, detail=f"Erro ao salvar: {str(e)}")
 
 @app.post("/api/telegram/test")
-async def test_telegram():
+async def test_telegram(current_user: dict = Depends(get_current_user)):
     """Envia uma mensagem de teste para o Telegram"""
     import requests
     
@@ -455,7 +458,7 @@ async def test_telegram():
         raise HTTPException(status_code=500, detail=f"Erro ao enviar teste: {str(e)}")
 
 @app.get("/api/stats")
-async def get_stats():
+async def get_stats(current_user: dict = Depends(get_current_user)):
     """Retorna estatísticas gerais do sistema"""
     try:
         links = list_links(10000)
