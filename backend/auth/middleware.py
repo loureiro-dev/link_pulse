@@ -44,7 +44,7 @@ async def get_current_user_from_token(token: str) -> dict:
             headers={"WWW-Authenticate": "Bearer"},
         )
     
-    # Get user from database
+    # Get user from database (always get fresh data, including is_admin)
     user = get_user_by_id(user_id)
     if user is None:
         raise HTTPException(
@@ -53,9 +53,9 @@ async def get_current_user_from_token(token: str) -> dict:
             headers={"WWW-Authenticate": "Bearer"},
         )
     
-    # Include is_admin from token if available (for backward compatibility)
-    if "is_admin" in payload:
-        user["is_admin"] = payload["is_admin"]
+    # Always use is_admin from database (more reliable than token)
+    # Token may be outdated if user was promoted to admin after login
+    # Database is the source of truth
     
     return user
 

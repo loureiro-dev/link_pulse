@@ -12,7 +12,15 @@ export default function Header() {
 
   useEffect(() => {
     // Load current user
-    getCurrentUser().then(setUser);
+    const loadUser = async () => {
+      const userData = await getCurrentUser();
+      setUser(userData);
+    };
+    loadUser();
+    
+    // Reload user every 30 seconds to catch admin status changes
+    const interval = setInterval(loadUser, 30000);
+    return () => clearInterval(interval);
   }, []);
 
   const handleLogout = () => {
