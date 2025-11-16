@@ -53,6 +53,10 @@ async def get_current_user_from_token(token: str) -> dict:
             headers={"WWW-Authenticate": "Bearer"},
         )
     
+    # Include is_admin from token if available (for backward compatibility)
+    if "is_admin" in payload:
+        user["is_admin"] = payload["is_admin"]
+    
     return user
 
 
@@ -102,4 +106,5 @@ async def get_current_user_optional(
         return await get_current_user_from_token(credentials.credentials)
     except HTTPException:
         return None
+
 

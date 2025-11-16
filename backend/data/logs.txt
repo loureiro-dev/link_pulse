@@ -1,2 +1,14 @@
 [2025-11-16 12:07:32] Página adicionada: black cripto (https://sndflw.com/i/black-friday-cripto-monstruosa)
 [2025-11-16 12:07:38] Página adicionada: black fluency (https://sndflw.com/i/mega-black-fluency-na-midia-crm)
+[2025-11-16 15:18:45] Iniciando coleta de links...
+[2025-11-16 15:18:45] Verificando página: black cripto (https://sndflw.com/i/black-friday-cripto-monstruosa)
+[2025-11-16 15:18:46] Telegram não configurado - pulando envio
+[2025-11-16 15:18:46] Verificando página: black fluency (https://sndflw.com/i/mega-black-fluency-na-midia-crm)
+[2025-11-16 15:18:46] Telegram não configurado - pulando envio
+[2025-11-16 15:18:46] Coleta finalizada. Páginas verificadas: 2, links encontrados: 2
+[2025-11-16 15:19:36] Iniciando coleta de links...
+[2025-11-16 15:19:36] Verificando página: black cripto (https://sndflw.com/i/black-friday-cripto-monstruosa)
+[2025-11-16 15:19:37] Telegram não configurado - pulando envio
+[2025-11-16 15:19:37] Verificando página: black fluency (https://sndflw.com/i/mega-black-fluency-na-midia-crm)
+[2025-11-16 15:19:37] Telegram não configurado - pulando envio
+[2025-11-16 15:19:37] Coleta finalizada. Páginas verificadas: 2, links encontrados: 2

@@ -1,13 +1,14 @@
 'use client';
 
-import { Bell, Settings, User, LogOut } from 'lucide-react';
+import { Bell, Settings, User, LogOut, Shield } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { logout, getCurrentUser } from '@/lib/auth';
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 
 export default function Header() {
   const router = useRouter();
-  const [user, setUser] = useState<{ email: string; name?: string } | null>(null);
+  const [user, setUser] = useState<{ email: string; name?: string; is_admin?: boolean } | null>(null);
 
   useEffect(() => {
     // Load current user
@@ -37,12 +38,22 @@ export default function Header() {
               {user.name || user.email}
             </div>
           )}
-          <button className="p-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors">
-            <Bell className="w-5 h-5" />
-          </button>
-          <button className="p-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors">
-            <Settings className="w-5 h-5" />
-          </button>
+          {user?.is_admin && (
+            <Link
+              href="/admin"
+              className="p-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+              title="Painel de Administração"
+            >
+              <Shield className="w-5 h-5" />
+            </Link>
+          )}
+          <Link
+            href="/profile"
+            className="p-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+            title="Meu Perfil"
+          >
+            <User className="w-5 h-5" />
+          </Link>
           <button
             onClick={handleLogout}
             className="p-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"

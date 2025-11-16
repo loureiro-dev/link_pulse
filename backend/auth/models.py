@@ -45,5 +45,19 @@ class UserResponse(BaseModel):
     id: int
     email: str
     name: Optional[str] = None
+    is_admin: bool = False
+    approved: bool = False
+
+
+class UpdateProfileRequest(BaseModel):
+    """Update profile request model"""
+    name: Optional[str] = None
+    email: Optional[EmailStr] = None
+
+
+class ChangePasswordRequest(BaseModel):
+    """Change password request model"""
+    current_password: str
+    new_password: str
 
 

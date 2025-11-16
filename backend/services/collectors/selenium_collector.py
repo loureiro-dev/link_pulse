@@ -80,3 +80,4 @@ def collect_with_selenium(url: str, driver=None, timeout: int = 25) -> List[str]
         if close_driver:
             driver.quit()
 
+

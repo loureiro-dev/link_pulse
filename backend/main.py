@@ -209,12 +209,16 @@ from backend.api.links import router as links_router
 from backend.api.pages import router as pages_router
 from backend.api.scraper import router as scraper_router
 from backend.api.settings import router as settings_router
+from backend.api.admin import router as admin_router
+from backend.api.profile import router as profile_router
 
 # Inclui routers de API (todas as rotas /api/* são protegidas com JWT)
 app.include_router(links_router)
 app.include_router(pages_router)
 app.include_router(scraper_router)
 app.include_router(settings_router)
+app.include_router(admin_router)
+app.include_router(profile_router)
 
 @app.get("/")
 async def root():

@@ -50,6 +50,25 @@ export interface TelegramConfig {
   configured: boolean;
 }
 
+export interface User {
+  id: number;
+  email: string;
+  name?: string;
+  is_admin: boolean;
+  approved: boolean;
+  created_at?: string;
+}
+
+export interface UpdateProfileData {
+  name?: string;
+  email?: string;
+}
+
+export interface ChangePasswordData {
+  current_password: string;
+  new_password: string;
+}
+
 // Import auth utilities to get token
 import { getToken } from './auth';
 
@@ -158,5 +177,45 @@ export async function saveTelegramConfig(config: { bot_token: string; chat_id: s
 export async function testTelegram(): Promise<{ success: boolean; message: string }> {
   return fetchApi('/api/telegram/test', {
     method: 'POST',
+  });
+}
+
+// Profile API
+export async function getMyProfile(): Promise<User> {
+  return fetchApi('/api/profile/me');
+}
+
+export async function updateProfile(data: UpdateProfileData): Promise<User> {
+  return fetchApi('/api/profile/me', {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  });
+}
+
+export async function changePassword(data: ChangePasswordData): Promise<{ message: string }> {
+  return fetchApi('/api/profile/change-password', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
+
+// Admin API
+export async function getAllUsers(includePending: boolean = true): Promise<User[]> {
+  return fetchApi(`/api/admin/users?include_pending=${includePending}`);
+}
+
+export async function getPendingUsers(): Promise<User[]> {
+  return fetchApi('/api/admin/users/pending');
+}
+
+export async function approveUser(userId: number): Promise<User> {
+  return fetchApi(`/api/admin/users/${userId}/approve`, {
+    method: 'POST',
+  });
+}
+
+export async function rejectUser(userId: number): Promise<{ message: string }> {
+  return fetchApi(`/api/admin/users/${userId}/reject`, {
+    method: 'DELETE',
   });
 }

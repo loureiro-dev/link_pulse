@@ -58,3 +58,4 @@ def send_message(link: str, source: str = "unknown") -> bool:
         print("Erro ao enviar para Telegram:", e)
         return False
 
+

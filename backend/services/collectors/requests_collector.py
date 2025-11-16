@@ -69,3 +69,4 @@ def collect_from_page(url: str) -> Tuple[List[str], bool, bool]:
     links = extract_whatsapp_links_from_html(html)
     return links, has_form, is_thanks
 
+

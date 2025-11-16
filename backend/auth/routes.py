@@ -62,7 +62,7 @@ async def login(user_data: UserLogin):
         JWT access token
         
     Raises:
-        HTTPException: If credentials are invalid
+        HTTPException: If credentials are invalid or user not approved
     """
     user = authenticate_user(user_data.email, user_data.password)
     
@@ -73,10 +73,17 @@ async def login(user_data: UserLogin):
             headers={"WWW-Authenticate": "Bearer"},
         )
     
+    # Check if user is approved (admins can always login)
+    if not user.get("approved", False) and not user.get("is_admin", False):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Your account is pending approval. Please wait for an administrator to approve your account.",
+        )
+    
     # Create access token
     access_token_expires = timedelta(minutes=60 * 24 * 7)  # 7 days
     access_token = create_access_token(
-        data={"sub": user["email"], "user_id": user["id"]},
+        data={"sub": user["email"], "user_id": user["id"], "is_admin": user.get("is_admin", False)},
         expires_delta=access_token_expires
     )
     
@@ -100,4 +107,5 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = security)
     from backend.auth.middleware import get_current_user_from_token
     user = await get_current_user_from_token(credentials.credentials)
     return UserResponse(**user)
+
 

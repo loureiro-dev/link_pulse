@@ -23,6 +23,8 @@ export interface User {
   id: number;
   email: string;
   name?: string;
+  is_admin: boolean;
+  approved: boolean;
 }
 
 export interface AuthResponse {

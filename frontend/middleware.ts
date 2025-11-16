@@ -12,6 +12,12 @@ const protectedRoutes = [
   '/scraper',
   '/pages-manager',
   '/telegram',
+  '/profile',
+];
+
+// Routes that require admin role (will be checked in the page component)
+const adminRoutes = [
+  '/admin',
 ];
 
 // Routes that should redirect to dashboard if already authenticated
@@ -26,10 +32,11 @@ export function middleware(request: NextRequest) {
 
   // Check if route is protected
   const isProtectedRoute = protectedRoutes.some(route => pathname.startsWith(route));
+  const isAdminRoute = adminRoutes.some(route => pathname.startsWith(route));
   const isAuthRoute = authRoutes.some(route => pathname.startsWith(route));
 
   // If accessing protected route without token, redirect to login
-  if (isProtectedRoute && !token) {
+  if ((isProtectedRoute || isAdminRoute) && !token) {
     const loginUrl = new URL('/login', request.url);
     loginUrl.searchParams.set('redirect', pathname);
     return NextResponse.redirect(loginUrl);
@@ -55,4 +62,5 @@ export const config = {
     '/((?!api|_next/static|_next/image|favicon.ico).*)',
   ],
 };
+
 
