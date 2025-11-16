@@ -50,21 +50,33 @@ export interface TelegramConfig {
   configured: boolean;
 }
 
+// Import auth utilities to get token
+import { getToken } from './auth';
+
 // Função auxiliar para fazer requisições
 async function fetchApi(endpoint: string, options: RequestInit = {}) {
   const url = `${API_BASE_URL}${endpoint}`;
   console.log(`[API] Fazendo requisição: ${options.method || 'GET'} ${url}`);
+  
+  // Get token from cookie if available
+  const token = getToken();
+  const headers: HeadersInit = {
+    'Accept': 'application/json',
+    'Content-Type': 'application/json',
+    ...options.headers,
+  };
+  
+  // Add Authorization header if token exists
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
   
   try {
     const response = await fetch(url, {
       ...options,
       cache: 'no-store',
       mode: 'cors',
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-        ...options.headers,
-      },
+      headers,
     });
     
     console.log(`[API] Resposta: ${response.status} ${response.statusText}`);
