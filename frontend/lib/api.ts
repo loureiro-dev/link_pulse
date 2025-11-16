@@ -1,4 +1,21 @@
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+// Usa variável de ambiente ou padrão localhost:8000
+// Garante que sempre use a URL correta
+const getApiBaseUrl = () => {
+  if (typeof window === 'undefined') {
+    return 'http://localhost:8000';
+  }
+  
+  // Tenta pegar da variável de ambiente, senão usa o padrão
+  const envUrl = process.env.NEXT_PUBLIC_API_URL;
+  if (envUrl) {
+    return envUrl;
+  }
+  
+  // Fallback para localhost:8000
+  return 'http://localhost:8000';
+};
+
+const API_BASE_URL = getApiBaseUrl();
 
 export interface Link {
   url: string;
@@ -33,82 +50,101 @@ export interface TelegramConfig {
   configured: boolean;
 }
 
+// Função auxiliar para fazer requisições
+async function fetchApi(endpoint: string, options: RequestInit = {}) {
+  const url = `${API_BASE_URL}${endpoint}`;
+  console.log(`[API] Fazendo requisição: ${options.method || 'GET'} ${url}`);
+  
+  try {
+    const response = await fetch(url, {
+      ...options,
+      cache: 'no-store',
+      mode: 'cors',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        ...options.headers,
+      },
+    });
+    
+    console.log(`[API] Resposta: ${response.status} ${response.statusText}`);
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`[API] Erro na resposta:`, errorText);
+      throw new Error(`Erro ${response.status}: ${errorText}`);
+    }
+    
+    const data = await response.json();
+    console.log(`[API] Dados recebidos:`, data);
+    return data;
+  } catch (error: any) {
+    console.error(`[API] Erro na requisição:`, error);
+    
+    // Verifica se é erro de conexão
+    if (
+      error.message?.includes('fetch') ||
+      error.name === 'TypeError' ||
+      error.message?.includes('Failed to fetch') ||
+      error.message?.includes('NetworkError') ||
+      error.message?.includes('Network request failed')
+    ) {
+      throw new Error('Não foi possível conectar ao backend. Verifique se o servidor está rodando na porta 8000.');
+    }
+    
+    throw error;
+  }
+}
+
 // API Functions
 export async function getLinks(limit: number = 1000): Promise<Link[]> {
-  const response = await fetch(`${API_BASE_URL}/api/links?limit=${limit}`);
-  if (!response.ok) throw new Error('Erro ao buscar links');
-  return response.json();
+  return fetchApi(`/api/links?limit=${limit}`);
 }
 
 export async function getPages(): Promise<Page[]> {
-  const response = await fetch(`${API_BASE_URL}/api/pages`);
-  if (!response.ok) throw new Error('Erro ao buscar páginas');
-  return response.json();
+  return fetchApi('/api/pages');
 }
 
 export async function createPage(page: Omit<Page, 'url'> & { url: string }): Promise<Page> {
-  const response = await fetch(`${API_BASE_URL}/api/pages`, {
+  return fetchApi('/api/pages', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(page),
   });
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.detail || 'Erro ao criar página');
-  }
-  return response.json();
 }
 
 export async function deletePage(url: string): Promise<void> {
-  const response = await fetch(`${API_BASE_URL}/api/pages?url=${encodeURIComponent(url)}`, {
+  await fetchApi(`/api/pages?url=${encodeURIComponent(url)}`, {
     method: 'DELETE',
   });
-  if (!response.ok) throw new Error('Erro ao excluir página');
 }
 
 export async function runScraper(): Promise<ScraperResponse> {
-  const response = await fetch(`${API_BASE_URL}/api/scraper/run`, {
+  return fetchApi('/api/scraper/run', {
     method: 'POST',
   });
-  if (!response.ok) throw new Error('Erro ao executar scraper');
-  return response.json();
 }
 
 export async function getLastRun(): Promise<{ last_run: string }> {
-  const response = await fetch(`${API_BASE_URL}/api/scraper/last-run`);
-  if (!response.ok) throw new Error('Erro ao buscar última execução');
-  return response.json();
+  return fetchApi('/api/scraper/last-run');
 }
 
 export async function getStats(): Promise<Stats> {
-  const response = await fetch(`${API_BASE_URL}/api/stats`);
-  if (!response.ok) throw new Error('Erro ao buscar estatísticas');
-  return response.json();
+  return fetchApi('/api/stats');
 }
 
 export async function getTelegramConfig(): Promise<TelegramConfig> {
-  const response = await fetch(`${API_BASE_URL}/api/telegram/config`);
-  if (!response.ok) throw new Error('Erro ao buscar configuração do Telegram');
-  return response.json();
+  return fetchApi('/api/telegram/config');
 }
 
 export async function saveTelegramConfig(config: { bot_token: string; chat_id: string }): Promise<void> {
-  const response = await fetch(`${API_BASE_URL}/api/telegram/save`, {
+  await fetchApi('/api/telegram/save', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(config),
   });
-  if (!response.ok) throw new Error('Erro ao salvar configuração');
 }
 
 export async function testTelegram(): Promise<{ success: boolean; message: string }> {
-  const response = await fetch(`${API_BASE_URL}/api/telegram/test`, {
+  return fetchApi('/api/telegram/test', {
     method: 'POST',
   });
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.detail || 'Erro ao testar Telegram');
-  }
-  return response.json();
 }
-
