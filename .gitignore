@@ -67,3 +67,6 @@ desktop.ini
 nano
 *.tmp
 *.bak
+
+# Arquivos de instrução de deploy (não devem ir pro git)
+DEPLOY_RENDER.md
