@@ -7,7 +7,7 @@ from fastapi import APIRouter, HTTPException, Depends
 from typing import List
 from backend.auth.middleware import get_current_user
 from backend.db.connection import list_links
-from backend.main import LinkResponse
+from backend.models import LinkResponse
 import os
 from datetime import datetime
 

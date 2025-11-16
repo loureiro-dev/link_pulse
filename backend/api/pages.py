@@ -6,13 +6,8 @@ Endpoints: /api/pages (GET, POST, DELETE)
 from fastapi import APIRouter, HTTPException, Depends
 from typing import List
 from backend.auth.middleware import get_current_user
-from backend.main import (
-    PageRequest, 
-    PageResponse, 
-    load_pages, 
-    save_pages, 
-    write_log
-)
+from backend.models import PageRequest, PageResponse
+from backend.main import load_pages, save_pages, write_log
 
 router = APIRouter(prefix="/api", tags=["pages"])
 

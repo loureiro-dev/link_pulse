@@ -5,8 +5,8 @@ Endpoints: /api/scraper/run, /api/scraper/last-run
 
 from fastapi import APIRouter, HTTPException, Depends
 from backend.auth.middleware import get_current_user
+from backend.models import ScraperResponse
 from backend.main import (
-    ScraperResponse, 
     load_pages, 
     write_log, 
     LAST_RUN_FILE,
@@ -114,4 +114,5 @@ async def get_last_run(current_user: dict = Depends(get_current_user)):
             return {"last_run": content}
     except Exception as e:
         return {"last_run": f"Erro ao ler: {str(e)}"}
+
 

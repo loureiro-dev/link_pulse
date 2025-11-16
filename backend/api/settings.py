@@ -7,7 +7,8 @@ from fastapi import APIRouter, HTTPException, Depends
 import requests
 from datetime import datetime
 from backend.auth.middleware import get_current_user
-from backend.main import TelegramConfig, load_config, save_config, write_log
+from backend.models import TelegramConfig
+from backend.main import load_config, save_config, write_log
 
 router = APIRouter(prefix="/api/telegram", tags=["settings"])
 
@@ -78,4 +79,5 @@ async def test_telegram(current_user: dict = Depends(get_current_user)):
     except Exception as e:
         write_log(f"Erro no teste de Telegram: {e}")
         raise HTTPException(status_code=500, detail=f"Erro ao enviar teste: {str(e)}")
+
 
