@@ -141,8 +141,8 @@ linkpulse/
 #### 1. Clone o repositório
 
 ```bash
-git clone https://github.com/seu-usuario/whatsapp-coletor-links.git
-cd whatsapp-coletor-links
+git clone https://github.com/seu-usuario/linkpulse.git
+cd linkpulse
 ```
 
 #### 2. Configurar Backend

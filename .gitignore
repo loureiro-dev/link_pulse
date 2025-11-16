@@ -14,10 +14,32 @@ __pycache__/
 *.pyo
 *.pyd
 
-# Variáveis de ambiente
+# Variáveis de ambiente e arquivos sensíveis
 .env
 .env.local
 .env.production
+.env.*
+*.env
+
+# Arquivos de configuração com dados sensíveis
+backend/data/config.json
+**/config.json
+**/secrets.json
+**/credentials.json
+
+# Tokens e chaves
+*.key
+*.pem
+*.p12
+*.pfx
+*_token.txt
+*_secret.txt
+*_password.txt
+
+# Arquivos com dados sensíveis
+**/telegram_config.json
+**/api_keys.txt
+**/secrets.txt
 
 # Node modules
 node_modules/
