@@ -26,6 +26,7 @@ ROOT = os.path.abspath(os.path.join(BACKEND_ROOT, ".."))
 SRC_ROOT = os.path.join(ROOT, "src")
 
 # Adiciona caminhos ao sys.path
+# Inclui backend/ para permitir imports de backend.*
 for p in [BACKEND_ROOT, ROOT, SRC_ROOT]:
     if p not in sys.path:
         sys.path.insert(0, p)
@@ -34,7 +35,8 @@ for p in [BACKEND_ROOT, ROOT, SRC_ROOT]:
 # IMPORTS DOS MÓDULOS DO PROJETO
 # ============================
 
-from src.storage.database import save_links, list_links, init_db
+# Import database functions from new location
+from backend.db.connection import save_links, list_links, init_db
 from src.collectors.requests_collector import collect_from_page
 from src.processing.cleaning import normalize_whatsapp_link, is_group_link
 
