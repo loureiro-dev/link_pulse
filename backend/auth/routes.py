@@ -3,7 +3,7 @@ Authentication routes
 Handles user registration and login endpoints
 """
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, status, Depends
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from backend.auth.models import UserRegister, UserLogin, TokenResponse, UserResponse
 from backend.auth.jwt import create_access_token
@@ -91,7 +91,7 @@ async def login(user_data: UserLogin):
 
 
 @router.get("/me", response_model=UserResponse)
-async def get_current_user(credentials: HTTPAuthorizationCredentials = security):
+async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)):
     """
     Get current authenticated user information
     
