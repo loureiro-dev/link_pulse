@@ -50,12 +50,23 @@ def get_password_hash(password: str) -> str:
         Bcrypt has a 72-byte limit. Passwords longer than 72 bytes will be truncated.
         This is a limitation of the bcrypt algorithm itself.
     """
+    # Ensure password is a string
+    if not isinstance(password, str):
+        password = str(password)
+    
     # Bcrypt has a 72-byte limit, so we truncate if necessary
     # Convert to bytes to check length, then truncate if needed
-    password_bytes = password.encode('utf-8')
-    if len(password_bytes) > 72:
-        password = password_bytes[:72].decode('utf-8', errors='ignore')
+    try:
+        password_bytes = password.encode('utf-8')
+        if len(password_bytes) > 72:
+            # Truncate to 72 bytes
+            password = password_bytes[:72].decode('utf-8', errors='ignore')
+    except (UnicodeEncodeError, UnicodeDecodeError):
+        # If encoding fails, try to truncate the string directly
+        if len(password) > 72:
+            password = password[:72]
     
+    # Use hash method explicitly with string
     return pwd_context.hash(password)
 
 
