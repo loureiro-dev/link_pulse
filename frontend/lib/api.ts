@@ -1,17 +1,23 @@
 // Usa variável de ambiente ou padrão localhost:8000
 // Garante que sempre use a URL correta
 const getApiBaseUrl = () => {
+  // No Next.js, variáveis NEXT_PUBLIC_* são expostas no cliente
+  // Tenta pegar da variável de ambiente primeiro
+  const envUrl = process.env.NEXT_PUBLIC_API_URL;
+  
+  if (envUrl) {
+    // Remove barra final se existir
+    return envUrl.replace(/\/$/, '');
+  }
+  
+  // Fallback: se estiver no servidor (SSR), usa localhost
+  // Se estiver no cliente e não tiver variável, também usa localhost (desenvolvimento)
   if (typeof window === 'undefined') {
     return 'http://localhost:8000';
   }
   
-  // Tenta pegar da variável de ambiente, senão usa o padrão
-  const envUrl = process.env.NEXT_PUBLIC_API_URL;
-  if (envUrl) {
-    return envUrl;
-  }
-  
-  // Fallback para localhost:8000
+  // No cliente, se não tiver variável configurada, mostra erro mais claro
+  console.warn('NEXT_PUBLIC_API_URL não configurada. Usando localhost:8000');
   return 'http://localhost:8000';
 };
 
