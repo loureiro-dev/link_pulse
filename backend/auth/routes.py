@@ -105,7 +105,21 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = security)
         HTTPException: If token is invalid or user not found
     """
     from backend.auth.middleware import get_current_user_from_token
-    user = await get_current_user_from_token(credentials.credentials)
-    return UserResponse(**user)
+    try:
+        user = await get_current_user_from_token(credentials.credentials)
+        # Ensure all required fields are present with defaults
+        user_data = {
+            "id": user.get("id"),
+            "email": user.get("email"),
+            "name": user.get("name"),
+            "is_admin": bool(user.get("is_admin", False)),
+            "approved": bool(user.get("approved", False))
+        }
+        return UserResponse(**user_data)
+    except Exception as e:
+        import traceback
+        print(f"Error in /auth/me: {e}")
+        traceback.print_exc()
+        raise
 
 
