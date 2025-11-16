@@ -223,11 +223,20 @@ def send_telegram_message(link: str, source: str):
 # ENDPOINTS DA API
 # ============================================================================
 
-# Inclui router de autenticação (rotas /auth/*)
+# Inclui routers de autenticação e API (rotas organizadas por módulos)
 app.include_router(auth_router)
 
-# Todas as rotas /api/* abaixo são protegidas com autenticação JWT
-# Usuário precisa estar logado e ter token válido para acessar
+# Importa routers de API organizados
+from backend.api.links import router as links_router
+from backend.api.pages import router as pages_router
+from backend.api.scraper import router as scraper_router
+from backend.api.settings import router as settings_router
+
+# Inclui routers de API (todas as rotas /api/* são protegidas com JWT)
+app.include_router(links_router)
+app.include_router(pages_router)
+app.include_router(scraper_router)
+app.include_router(settings_router)
 
 @app.get("/")
 async def root():
@@ -235,265 +244,15 @@ async def root():
     return {
         "name": "LinkPulse API",
         "version": "1.0.0",
-        "status": "running"
+        "status": "running",
+        "authentication": "enabled"
     }
 
-@app.get("/api/links", response_model=List[LinkResponse])
-async def get_links(limit: int = 1000, current_user: dict = Depends(get_current_user)):
-    """
-    Retorna a lista de links coletados
-    Parâmetro limit controla quantos links retornar (padrão: 1000)
-    """
-    try:
-        rows = list_links(limit)
-        links = [
-            LinkResponse(url=row[0], source=row[1], found_at=row[2])
-            for row in rows
-        ]
-        return links
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Erro ao buscar links: {str(e)}")
-
-@app.get("/api/pages", response_model=List[PageResponse])
-async def get_pages(current_user: dict = Depends(get_current_user)):
-    """Retorna todas as páginas cadastradas para monitoramento"""
-    try:
-        pages = load_pages()
-        return [PageResponse(**page) for page in pages]
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Erro ao buscar páginas: {str(e)}")
-
-@app.post("/api/pages", response_model=PageResponse)
-async def create_page(page: PageRequest, current_user: dict = Depends(get_current_user)):
-    """Adiciona uma nova página para monitoramento"""
-    try:
-        pages = load_pages()
-        
-        # Verifica se a URL já existe
-        if any(p.get("url") == page.url for p in pages):
-            raise HTTPException(status_code=400, detail="URL já cadastrada")
-        
-        # Adiciona a nova página
-        new_page = {"url": page.url, "name": page.name}
-        pages.append(new_page)
-        save_pages(pages)
-        
-        write_log(f"Página adicionada: {page.name} ({page.url})")
-        return PageResponse(**new_page)
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Erro ao criar página: {str(e)}")
-
-@app.delete("/api/pages")
-async def delete_page(url: str, current_user: dict = Depends(get_current_user)):
-    """Remove uma página do monitoramento"""
-    try:
-        pages = load_pages()
-        original_count = len(pages)
-        pages = [p for p in pages if p.get("url") != url]
-        
-        if len(pages) == original_count:
-            raise HTTPException(status_code=404, detail="Página não encontrada")
-        
-        save_pages(pages)
-        write_log(f"Página excluída: {url}")
-        return {"success": True, "message": "Página excluída com sucesso"}
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Erro ao excluir página: {str(e)}")
-
-@app.post("/api/scraper/run", response_model=ScraperResponse)
-async def run_scraper(current_user: dict = Depends(get_current_user)):
-    """
-    Executa o scraper em todas as páginas cadastradas
-    Retorna os links encontrados e estatísticas da execução
-    """
-    try:
-        write_log("Iniciando coleta de links...")
-        pages = load_pages()
-        
-        if not pages:
-            return ScraperResponse(
-                success=False,
-                total_checked=0,
-                links_found=0,
-                links=[],
-                message="Nenhuma página cadastrada"
-            )
-        
-        all_found = []
-        total_checked = 0
-        
-        for page in pages:
-            url = str(page.get("url", "")).strip()
-            name = str(page.get("name", "")).strip()
-            
-            if not url:
-                continue
-            
-            total_checked += 1
-            write_log(f"Verificando página: {name} ({url})")
-            
-            try:
-                links, has_form, is_thanks = collect_from_page(url)
-            except Exception as e:
-                write_log(f"Erro ao coletar {url}: {e}")
-                links = []
-            
-            # Processa e normaliza os links
-            cleaned = []
-            for l in links:
-                c = normalize_whatsapp_link(l)
-                if is_group_link(c):
-                    cleaned.append(c)
-            
-            # Remove duplicatas
-            cleaned = list(dict.fromkeys(cleaned))
-            
-            if cleaned:
-                # Salva no banco de dados
-                save_links(cleaned, source=name)
-                
-                # Prepara resposta e envia notificações
-                for link in cleaned:
-                    all_found.append({
-                        "url": link,
-                        "source": name,
-                        "found_at": datetime.utcnow().isoformat()
-                    })
-                    send_telegram_message(link, name)
-        
-        # Registra última execução
-        msg = f"Coleta finalizada. Páginas verificadas: {total_checked}, links encontrados: {len(all_found)}"
-        with open(LAST_RUN_FILE, "w", encoding="utf-8") as f:
-            f.write(f"{datetime.utcnow().isoformat()} - {msg}")
-        
-        write_log(msg)
-        
-        return ScraperResponse(
-            success=True,
-            total_checked=total_checked,
-            links_found=len(all_found),
-            links=all_found,
-            message=msg
-        )
-    except Exception as e:
-        write_log(f"Erro na coleta: {e}")
-        raise HTTPException(status_code=500, detail=f"Erro ao executar scraper: {str(e)}")
-
-@app.get("/api/scraper/last-run")
-async def get_last_run(current_user: dict = Depends(get_current_user)):
-    """Retorna informações da última execução do scraper"""
-    try:
-        if not os.path.exists(LAST_RUN_FILE):
-            return {"last_run": "Nunca executado"}
-        
-        with open(LAST_RUN_FILE, "r", encoding="utf-8") as f:
-            content = f.read()
-            return {"last_run": content}
-    except Exception as e:
-        return {"last_run": f"Erro ao ler: {str(e)}"}
-
-@app.get("/api/telegram/config")
-async def get_telegram_config(current_user: dict = Depends(get_current_user)):
-    """Retorna a configuração atual do Telegram"""
-    config = load_config()
-    telegram_config = config.get("telegram", {})
-    return {
-        "bot_token": telegram_config.get("bot_token", ""),
-        "chat_id": telegram_config.get("chat_id", ""),
-        "configured": bool(telegram_config.get("bot_token") and telegram_config.get("chat_id"))
-    }
-
-@app.post("/api/telegram/save")
-async def save_telegram_config(config: TelegramConfig, current_user: dict = Depends(get_current_user)):
-    """Salva a configuração do Telegram"""
-    try:
-        current_config = load_config()
-        current_config["telegram"] = {
-            "bot_token": config.bot_token.strip(),
-            "chat_id": config.chat_id.strip()
-        }
-        
-        if save_config(current_config):
-            write_log("Configuração Telegram atualizada")
-            return {"success": True, "message": "Configuração salva com sucesso"}
-        else:
-            raise HTTPException(status_code=500, detail="Erro ao salvar configuração")
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Erro ao salvar: {str(e)}")
-
-@app.post("/api/telegram/test")
-async def test_telegram(current_user: dict = Depends(get_current_user)):
-    """Envia uma mensagem de teste para o Telegram"""
-    import requests
-    
-    config = load_config()
-    token = config.get("telegram", {}).get("bot_token", "").strip()
-    chat_id = config.get("telegram", {}).get("chat_id", "").strip()
-    
-    if not token or not chat_id:
-        raise HTTPException(status_code=400, detail="Telegram não configurado")
-    
-    msg = (
-        "*TESTE DE NOTIFICAÇÃO*\n\n"
-        f"Se você recebeu esta mensagem, o Telegram está configurado corretamente!\n\n"
-        f"*Data/Hora:* {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}\n\n"
-        "━━━━━━━━━━━━━━━━━━━━\n"
-        "*Sistema operacional!*"
-    )
-    
-    url = f"https://api.telegram.org/bot{token}/sendMessage"
-    payload = {
-        "chat_id": chat_id,
-        "text": msg,
-        "parse_mode": "Markdown"
-    }
-    
-    try:
-        response = requests.post(url, json=payload, timeout=10)
-        response.raise_for_status()
-        write_log("Teste de Telegram enviado com sucesso")
-        return {"success": True, "message": "Mensagem de teste enviada com sucesso!"}
-    except Exception as e:
-        write_log(f"Erro no teste de Telegram: {e}")
-        raise HTTPException(status_code=500, detail=f"Erro ao enviar teste: {str(e)}")
-
-@app.get("/api/stats")
-async def get_stats(current_user: dict = Depends(get_current_user)):
-    """Retorna estatísticas gerais do sistema"""
-    try:
-        links = list_links(10000)
-        pages = load_pages()
-        
-        # Calcula estatísticas
-        total_links = len(links)
-        unique_links = len(set(link[0] for link in links))
-        campaigns = len(set(link[1] for link in links if link[1]))
-        total_pages = len(pages)
-        
-        # Lê última execução
-        last_run = "Nunca executado"
-        if os.path.exists(LAST_RUN_FILE):
-            try:
-                with open(LAST_RUN_FILE, "r", encoding="utf-8") as f:
-                    last_run = f.read()
-            except:
-                pass
-        
-        return {
-            "total_links": total_links,
-            "unique_links": unique_links,
-            "campaigns": campaigns,
-            "total_pages": total_pages,
-            "last_run": last_run
-        }
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Erro ao buscar estatísticas: {str(e)}")
+# Rotas removidas - agora estão organizadas em módulos separados:
+# - backend/api/links.py: GET /api/links, GET /api/stats
+# - backend/api/pages.py: GET/POST/DELETE /api/pages
+# - backend/api/scraper.py: POST /api/scraper/run, GET /api/scraper/last-run
+# - backend/api/settings.py: GET/POST /api/telegram/config, POST /api/telegram/test
 
 if __name__ == "__main__":
     import uvicorn
