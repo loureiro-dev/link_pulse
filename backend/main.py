@@ -13,19 +13,19 @@ from pydantic import BaseModel
 from typing import List, Optional
 
 # ============================
-# AJUSTE DO ROOT CORRETO
+# CONFIGURAÇÃO DE CAMINHOS DO PROJETO
 # ============================
 
-# Caminho da pasta backend/
+# Caminho da pasta backend/ (onde está este arquivo)
 BACKEND_ROOT = os.path.dirname(__file__)
 
 # Caminho da raiz do projeto (volta 1 nível)
 ROOT = os.path.abspath(os.path.join(BACKEND_ROOT, ".."))
 
-# Caminho da pasta src/
+# Caminho da pasta src/ (código legado, mantido para compatibilidade)
 SRC_ROOT = os.path.join(ROOT, "src")
 
-# Adiciona caminhos ao sys.path
+# Adiciona caminhos ao sys.path para permitir imports
 # Inclui backend/ para permitir imports de backend.*
 for p in [BACKEND_ROOT, ROOT, SRC_ROOT]:
     if p not in sys.path:
@@ -35,14 +35,14 @@ for p in [BACKEND_ROOT, ROOT, SRC_ROOT]:
 # IMPORTS DOS MÓDULOS DO PROJETO
 # ============================
 
-# Import database functions from new location
+# Importa funções de banco de dados do novo local
 from backend.db.connection import save_links, list_links, init_db
-# Import services from new location
+# Importa serviços do novo local (coleta, processamento)
 from backend.services.collectors.requests_collector import collect_from_page
 from backend.services.processing.cleaning import normalize_whatsapp_link, is_group_link
 
 # ============================
-# CONFIGURAÇÃO DE PATHS
+# CONFIGURAÇÃO DE ARQUIVOS E PATHS
 # ============================
 
 DATA_DIR = os.path.join(ROOT, "backend", "data")  
@@ -69,10 +69,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Inicializa o banco de dados
+# Inicializa o banco de dados (cria tabelas se não existirem)
 init_db()
 
-# Importa router de autenticação
+# Importa router de autenticação (login, registro)
 from backend.auth.routes import router as auth_router
 # Importa middleware de autenticação para proteger rotas
 from backend.auth.middleware import get_current_user
@@ -82,8 +82,10 @@ from backend.auth.middleware import get_current_user
 PROTECTED_ROUTES = True  # Frontend já está implementado
 
 # ============================================================================
-# Modelos Pydantic para validação de dados
+# MODELOS PYDANTIC PARA VALIDAÇÃO DE DADOS
 # ============================================================================
+# Modelos de entrada e saída da API usando Pydantic
+# Garantem validação automática de tipos e dados
 
 class LinkResponse(BaseModel):
     """Modelo de resposta para um link coletado"""
@@ -115,8 +117,9 @@ class ScraperResponse(BaseModel):
     message: str
 
 # ============================================================================
-# Funções auxiliares
+# FUNÇÕES AUXILIARES
 # ============================================================================
+# Funções utilitárias para gerenciamento de páginas, configuração e logs
 
 def load_pages():
     """Carrega as páginas cadastradas do arquivo CSV"""
@@ -217,11 +220,14 @@ def send_telegram_message(link: str, source: str):
         return False
 
 # ============================================================================
-# Endpoints da API
+# ENDPOINTS DA API
 # ============================================================================
 
-# Inclui router de autenticação
+# Inclui router de autenticação (rotas /auth/*)
 app.include_router(auth_router)
+
+# Todas as rotas /api/* abaixo são protegidas com autenticação JWT
+# Usuário precisa estar logado e ter token válido para acessar
 
 @app.get("/")
 async def root():
