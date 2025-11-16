@@ -48,7 +48,32 @@ npm run dev
 
 ## Deploy
 
-O frontend está configurado para deploy no Vercel. O backend pode ser hospedado em qualquer serviço que suporte Python (Render, Railway, etc.).
+### Frontend (Vercel - Gratuito)
+
+1. Conecte seu repositório no [Vercel](https://vercel.com)
+2. Configure a variável de ambiente:
+   - `NEXT_PUBLIC_API_URL` = URL do seu backend
+3. Deploy automático a cada push
+
+### Backend (Render/Railway - Gratuito)
+
+**Render:**
+1. Crie uma conta no [Render](https://render.com)
+2. New → Web Service
+3. Conecte o repositório
+4. Configurações:
+   - Build Command: `pip install -r backend/requirements.txt`
+   - Start Command: `cd backend && gunicorn main:app -w 4 -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT`
+   - Environment: Python 3
+5. Adicione variável: `CORS_ORIGINS` = URL do frontend Vercel
+
+**Railway:**
+1. Crie conta no [Railway](https://railway.app)
+2. New Project → Deploy from GitHub
+3. Selecione o repositório
+4. Configure o start command no `Procfile`
+
+Após o deploy, ambos os serviços ficam online 24/7 sem precisar da sua máquina.
 
 ## Funcionalidades
 
