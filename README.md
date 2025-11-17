@@ -93,6 +93,12 @@ Principais endpoints:
 - `POST /api/pages` - Adiciona página
 - `POST /api/scraper/run` - Executa coleta
 
+## Git Flow
+
+Este projeto utiliza **Git Flow** para gerenciamento de branches. **Nunca faça commits diretamente na branch `main`!**
+
+Para mais detalhes sobre o workflow, consulte [GITFLOW.md](./GITFLOW.md).
+
 ## Notas
 
 Este é um projeto de portfólio desenvolvido para demonstrar habilidades em web scraping, desenvolvimento full-stack e engenharia de dados.
