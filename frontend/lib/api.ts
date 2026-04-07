@@ -27,6 +27,8 @@ export interface Link {
   url: string;
   source: string;
   found_at: string;
+  link_type?: 'group' | 'community';
+  is_relaunch?: boolean;
 }
 
 export interface Page {
@@ -217,6 +219,12 @@ export interface DDGPage {
   url: string;
   name: string;
   has_whatsapp: boolean | null;
+  has_form: boolean | null;
+  url_score: number;
+  landing_score: number;
+  total_score: number;
+  signals: string[];
+  whatsapp_links: string[];
   verified: boolean;
   added: boolean;
   query: string | null;
@@ -258,6 +266,10 @@ export interface YoutubeVideoResult {
   whatsapp_links: string[];
   landing_urls: string[];
   added_urls: string[];
+  ai_status?: 'approved' | 'rejected' | 'review' | null;
+  ai_confidence?: number | null;
+  ai_niche?: string | null;
+  ai_reasoning?: string | null;
 }
 
 export interface YoutubeDiscoveryResponse {
@@ -269,7 +281,7 @@ export interface YoutubeDiscoveryResponse {
 }
 
 export interface YoutubeConfig {
-  api_key: string;
+  api_key_preview: string;
   configured: boolean;
 }
 
@@ -289,6 +301,9 @@ export async function runYoutubeDiscovery(opts: {
   queries?: string[];
   max_results_per_query?: number;
   auto_add_with_url?: boolean;
+  filter_tutorials?: boolean;
+  only_with_links?: boolean;
+  use_ai?: boolean;
 } = {}): Promise<YoutubeDiscoveryResponse> {
   return fetchApi('/api/discovery/youtube', { method: 'POST', body: JSON.stringify(opts) });
 }
@@ -334,6 +349,78 @@ export async function runTelegramDiscovery(opts: {
   auto_add?: boolean;
 }): Promise<TelegramDiscoveryResponse> {
   return fetchApi('/api/discovery/telegram', { method: 'POST', body: JSON.stringify(opts) });
+}
+
+// ─── DISCOVERY: FACEBOOK LIBRARY ─────────────────────────────────────────────
+
+export interface FacebookLibraryPage {
+  url: string;
+  name: string;
+  url_score: number;
+  source_query: string;
+  ai_status: 'approved' | 'review' | 'rejected' | null;
+  ai_confidence: number | null;
+  ai_niche: string | null;
+  ai_reasoning: string | null;
+  added: boolean;
+}
+
+export interface FacebookLibraryResponse {
+  success: boolean;
+  pages_found: number;
+  pages_added: number;
+  approved: number;
+  review: number;
+  rejected: number;
+  pages: FacebookLibraryPage[];
+  message: string;
+}
+
+export async function runFacebookLibraryDiscovery(opts: {
+  queries: string[];
+  scroll_times?: number;
+  max_ads_per_query?: number;
+  use_ai?: boolean;
+  auto_add?: boolean;
+}): Promise<FacebookLibraryResponse> {
+  return fetchApi('/api/discovery/facebook-library', { method: 'POST', body: JSON.stringify(opts) });
+}
+
+// ─── AI SETTINGS ──────────────────────────────────────────────────────────────
+
+export interface AiConfig {
+  configured: boolean;
+  enabled: boolean;
+  provider: 'gemini' | 'openai';
+  min_confidence: number;
+  api_key_preview: string;
+}
+
+export async function getAiConfig(): Promise<AiConfig> {
+  return fetchApi('/api/ai/config');
+}
+
+export async function saveAiConfig(data: {
+  api_key: string;
+  provider: string;
+  min_confidence: number;
+  enabled: boolean;
+}): Promise<{ success: boolean; message: string }> {
+  return fetchApi('/api/ai/save', { method: 'POST', body: JSON.stringify(data) });
+}
+
+export async function validateAiKey(): Promise<{ success: boolean; message: string }> {
+  return fetchApi('/api/ai/validate', { method: 'POST' });
+}
+
+export async function classifyUrl(url: string, title?: string): Promise<{
+  is_capture_page: boolean;
+  confidence: number;
+  niche: string;
+  reasoning: string;
+  provider: string;
+}> {
+  return fetchApi('/api/ai/classify', { method: 'POST', body: JSON.stringify({ url, title }) });
 }
 
 // ─── YOUTUBE SETTINGS ─────────────────────────────────────────────────────────
