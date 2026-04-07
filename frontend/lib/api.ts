@@ -249,6 +249,59 @@ export async function getDefaultQueries(): Promise<{ queries: string[] }> {
   return fetchApi('/api/discovery/queries');
 }
 
+// Facebook Ad Library API
+export interface FacebookAdResult {
+  ad_id: string;
+  page_name: string;
+  name: string;
+  landing_urls: string[];
+  whatsapp_direct: string[];
+  snapshot_url: string;
+  ad_text: string;
+  search_term: string;
+  start_date: string;
+  added_urls: string[];
+}
+
+export interface FacebookDiscoveryResponse {
+  success: boolean;
+  ads_found: number;
+  pages_added: number;
+  results: FacebookAdResult[];
+  message: string;
+}
+
+export interface FacebookConfig {
+  access_token: string;
+  configured: boolean;
+}
+
+export async function getFacebookConfig(): Promise<FacebookConfig> {
+  return fetchApi('/api/facebook/config');
+}
+
+export async function saveFacebookToken(access_token: string): Promise<{ success: boolean; message: string }> {
+  return fetchApi('/api/facebook/save', {
+    method: 'POST',
+    body: JSON.stringify({ access_token }),
+  });
+}
+
+export async function validateFacebookToken(): Promise<{ success: boolean; message: string }> {
+  return fetchApi('/api/facebook/validate', { method: 'POST' });
+}
+
+export async function runFacebookDiscovery(options: {
+  search_terms?: string[];
+  limit_per_query?: number;
+  auto_add_with_url?: boolean;
+} = {}): Promise<FacebookDiscoveryResponse> {
+  return fetchApi('/api/discovery/facebook', {
+    method: 'POST',
+    body: JSON.stringify(options),
+  });
+}
+
 // Admin API
 export async function getAllUsers(includePending: boolean = true): Promise<User[]> {
   return fetchApi(`/api/admin/users?include_pending=${includePending}`);

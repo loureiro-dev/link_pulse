@@ -13,6 +13,10 @@ from backend.services.discovery.page_discovery import (
     discover_pages,
     DEFAULT_QUERIES,
 )
+from backend.services.discovery.facebook_ads_discovery import (
+    search_active_ads,
+    FB_SEARCH_QUERIES,
+)
 
 router = APIRouter(prefix="/api/discovery", tags=["discovery"])
 
@@ -108,6 +112,115 @@ async def run_discovery(
         pages=result_pages,
         message=msg,
     )
+
+
+
+# ─── FACEBOOK AD LIBRARY DISCOVERY ───────────────────────────────────────────
+
+class FacebookDiscoveryRequest(BaseModel):
+    search_terms: Optional[List[str]] = None
+    limit_per_query: int = 20
+    auto_add_with_url: bool = False
+
+
+class FacebookAdResult(BaseModel):
+    ad_id: str
+    page_name: str
+    name: str
+    landing_urls: List[str]
+    whatsapp_direct: List[str]
+    snapshot_url: str
+    ad_text: str
+    search_term: str
+    start_date: str
+    added_urls: List[str] = []
+
+
+class FacebookDiscoveryResponse(BaseModel):
+    success: bool
+    ads_found: int
+    pages_added: int
+    results: List[FacebookAdResult]
+    message: str
+
+
+@router.post("/facebook", response_model=FacebookDiscoveryResponse)
+async def run_facebook_discovery(
+    request: FacebookDiscoveryRequest,
+    current_user: dict = Depends(get_current_user),
+):
+    """
+    Busca anúncios ATIVOS no Facebook Ad Library relacionados a lançamentos
+    com grupos WhatsApp. Requer token configurado em /api/facebook/save.
+    """
+    from backend.main import load_config
+
+    user_id = current_user["id"]
+    config = load_config()
+    token = config.get("facebook", {}).get("access_token", "").strip()
+
+    if not token:
+        raise HTTPException(
+            status_code=400,
+            detail="Token do Facebook não configurado. Acesse as configurações e adicione seu token.",
+        )
+
+    try:
+        ads = search_active_ads(
+            access_token=token,
+            search_terms=request.search_terms,
+            limit_per_query=request.limit_per_query,
+        )
+    except RuntimeError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erro na busca: {str(e)}")
+
+    pages_added = 0
+    results: List[FacebookAdResult] = []
+
+    for ad in ads:
+        added_urls: List[str] = []
+
+        if request.auto_add_with_url and ad["landing_urls"]:
+            url = ad["landing_urls"][0]
+            name = ad["name"] or ad["page_name"] or url
+            if add_page(url, name, user_id):
+                added_urls.append(url)
+                pages_added += 1
+
+        results.append(
+            FacebookAdResult(
+                ad_id=ad["ad_id"],
+                page_name=ad["page_name"],
+                name=ad["name"],
+                landing_urls=ad["landing_urls"],
+                whatsapp_direct=ad["whatsapp_direct"],
+                snapshot_url=ad["snapshot_url"],
+                ad_text=ad["ad_text"],
+                search_term=ad["search_term"],
+                start_date=ad["start_date"],
+                added_urls=added_urls,
+            )
+        )
+
+    msg = f"Facebook Ads: {len(ads)} anúncios ativos encontrados"
+    if request.auto_add_with_url:
+        msg += f" | {pages_added} páginas adicionadas"
+
+    return FacebookDiscoveryResponse(
+        success=True,
+        ads_found=len(ads),
+        pages_added=pages_added,
+        results=results,
+        message=msg,
+    )
+
+
+@router.get("/facebook/queries")
+async def get_facebook_queries(current_user: dict = Depends(get_current_user)):
+    """Retorna os termos de busca padrão para o Facebook"""
+    return {"queries": FB_SEARCH_QUERIES}
 
 
 @router.post("/add")
