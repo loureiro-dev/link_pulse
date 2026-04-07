@@ -224,7 +224,7 @@ app.include_router(auth_router)
 from backend.api.links import router as links_router
 from backend.api.pages import router as pages_router
 from backend.api.scraper import router as scraper_router
-from backend.api.settings import router as settings_router, router_telegram
+from backend.api.settings import router as settings_router, router_telegram, router_youtube
 from backend.api.admin import router as admin_router
 from backend.api.profile import router as profile_router
 from backend.api.discovery import router as discovery_router
@@ -235,6 +235,7 @@ app.include_router(pages_router)
 app.include_router(scraper_router)
 app.include_router(settings_router)
 app.include_router(router_telegram)
+app.include_router(router_youtube)
 app.include_router(admin_router)
 app.include_router(profile_router)
 app.include_router(discovery_router)
@@ -248,6 +249,70 @@ async def root():
         "status": "running",
         "authentication": "enabled"
     }
+
+
+# ─── WEBHOOK DO BOT TELEGRAM ──────────────────────────────────────────────────
+# Endpoint público (sem auth JWT) que recebe mensagens do bot Telegram.
+# Quando você envia uma URL ao bot, ela é coletada automaticamente.
+from fastapi import Request as FastAPIRequest
+
+@app.post("/api/telegram/bot-webhook")
+async def telegram_bot_webhook(req: FastAPIRequest):
+    """
+    Recebe mensagens do bot Telegram (via webhook).
+    Se a mensagem contiver uma URL, ela é adicionada ao monitoramento
+    e scraped imediatamente em busca de grupos WhatsApp.
+    """
+    import re
+    try:
+        body = await req.json()
+    except Exception:
+        return {"ok": True}
+
+    message = body.get("message") or body.get("channel_post") or {}
+    text = message.get("text", "").strip()
+    chat_id = message.get("chat", {}).get("id")
+    from_user = message.get("from", {}).get("first_name", "você")
+
+    if not text:
+        return {"ok": True}
+
+    urls = re.findall(r"https?://[^\s]+", text)
+    if not urls:
+        return {"ok": True}
+
+    try:
+        from backend.services.discovery.quick_collect import collect_url_now
+        config = load_config()
+        token = os.getenv("TELEGRAM_BOT_TOKEN", "").strip() or config.get("telegram", {}).get("bot_token", "").strip()
+
+        total_links = 0
+        for url in urls:
+            result = collect_url_now(
+                url=url,
+                user_id=1,
+                source_name=f"Bot Telegram — {from_user}",
+                add_to_pages=True,
+                send_telegram=False,
+            )
+            total_links += result.get("links_found", 0)
+
+        if token and chat_id:
+            if total_links > 0:
+                reply = f"✅ *{total_links} grupo(s) WhatsApp* encontrado(s) e salvos!\n\nURL(s) adicionadas ao monitoramento."
+            else:
+                reply = f"🔍 URL recebida e adicionada ao monitoramento.\nNenhum grupo encontrado por enquanto (verificarei novamente no próximo ciclo)."
+
+            import requests as _req
+            _req.post(
+                f"https://api.telegram.org/bot{token}/sendMessage",
+                json={"chat_id": chat_id, "text": reply, "parse_mode": "Markdown"},
+                timeout=8,
+            )
+    except Exception as e:
+        write_log(f"Erro no webhook Telegram: {e}")
+
+    return {"ok": True}
 
 # Rotas removidas - agora estão organizadas em módulos separados:
 # - backend/api/links.py: GET /api/links, GET /api/stats

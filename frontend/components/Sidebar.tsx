@@ -5,7 +5,8 @@ import {
   LayoutDashboard, 
   FileText, 
   PlayCircle, 
-  MessageSquare, 
+  Zap,
+  Settings,
   Info,
   Link as LinkIcon
 } from 'lucide-react';
@@ -14,7 +15,8 @@ const menuItems = [
   { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { path: '/pages-manager', label: 'Gerenciar Páginas', icon: FileText },
   { path: '/scraper', label: 'Rodar Coleta', icon: PlayCircle },
-  { path: '/telegram', label: 'Configurar Telegram', icon: MessageSquare },
+  { path: '/discovery', label: 'Descoberta', icon: Zap },
+  { path: '/telegram', label: 'Configurações', icon: Settings },
   { path: '/about', label: 'Sobre', icon: Info },
 ];
 

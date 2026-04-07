@@ -205,8 +205,15 @@ export async function changePassword(data: ChangePasswordData): Promise<{ messag
   });
 }
 
-// Discovery API
-export interface DiscoveredPage {
+// ─── DISCOVERY: SHARED ────────────────────────────────────────────────────────
+
+export async function addDiscoveredPage(url: string, name: string): Promise<{ success: boolean; message: string }> {
+  return fetchApi('/api/discovery/add', { method: 'POST', body: JSON.stringify({ url, name }) });
+}
+
+// ─── DISCOVERY: DUCKDUCKGO ────────────────────────────────────────────────────
+
+export interface DDGPage {
   url: string;
   name: string;
   has_whatsapp: boolean | null;
@@ -215,92 +222,121 @@ export interface DiscoveredPage {
   query: string | null;
 }
 
-export interface DiscoveryRequest {
+export interface DDGResponse {
+  success: boolean;
+  pages_found: number;
+  pages_added: number;
+  pages: DDGPage[];
+  message: string;
+}
+
+export async function runDuckDuckGoDiscovery(opts: {
   queries?: string[];
   max_results_per_query?: number;
   verify?: boolean;
   only_with_whatsapp?: boolean;
   auto_add?: boolean;
+} = {}): Promise<DDGResponse> {
+  return fetchApi('/api/discovery/duckduckgo', { method: 'POST', body: JSON.stringify(opts) });
 }
 
-export interface DiscoveryResponse {
-  success: boolean;
-  pages_found: number;
-  pages_added: number;
-  pages: DiscoveredPage[];
-  message: string;
+export async function getDDGQueries(): Promise<{ queries: string[] }> {
+  return fetchApi('/api/discovery/duckduckgo/queries');
 }
 
-export async function runDiscovery(request: DiscoveryRequest = {}): Promise<DiscoveryResponse> {
-  return fetchApi('/api/discovery/run', {
-    method: 'POST',
-    body: JSON.stringify(request),
-  });
-}
+// ─── DISCOVERY: YOUTUBE ───────────────────────────────────────────────────────
 
-export async function addDiscoveredPage(url: string, name: string): Promise<{ success: boolean; message: string }> {
-  return fetchApi('/api/discovery/add', {
-    method: 'POST',
-    body: JSON.stringify({ url, name }),
-  });
-}
-
-export async function getDefaultQueries(): Promise<{ queries: string[] }> {
-  return fetchApi('/api/discovery/queries');
-}
-
-// Facebook Ad Library API
-export interface FacebookAdResult {
-  ad_id: string;
-  page_name: string;
-  name: string;
+export interface YoutubeVideoResult {
+  video_id: string;
+  title: string;
+  channel: string;
+  published_at: string;
+  description: string;
+  thumbnail: string;
+  video_url: string;
+  query: string;
+  whatsapp_links: string[];
   landing_urls: string[];
-  whatsapp_direct: string[];
-  snapshot_url: string;
-  ad_text: string;
-  search_term: string;
-  start_date: string;
   added_urls: string[];
 }
 
-export interface FacebookDiscoveryResponse {
+export interface YoutubeDiscoveryResponse {
   success: boolean;
-  ads_found: number;
+  videos_found: number;
   pages_added: number;
-  results: FacebookAdResult[];
+  results: YoutubeVideoResult[];
   message: string;
 }
 
-export interface FacebookConfig {
-  access_token: string;
+export interface YoutubeConfig {
+  api_key: string;
   configured: boolean;
 }
 
-export async function getFacebookConfig(): Promise<FacebookConfig> {
-  return fetchApi('/api/facebook/config');
+export async function getYoutubeConfig(): Promise<YoutubeConfig> {
+  return fetchApi('/api/youtube/config');
 }
 
-export async function saveFacebookToken(access_token: string): Promise<{ success: boolean; message: string }> {
-  return fetchApi('/api/facebook/save', {
-    method: 'POST',
-    body: JSON.stringify({ access_token }),
-  });
+export async function saveYoutubeApiKey(api_key: string): Promise<{ success: boolean; message: string }> {
+  return fetchApi('/api/youtube/save', { method: 'POST', body: JSON.stringify({ api_key }) });
 }
 
-export async function validateFacebookToken(): Promise<{ success: boolean; message: string }> {
-  return fetchApi('/api/facebook/validate', { method: 'POST' });
+export async function validateYoutubeKey(): Promise<{ success: boolean; message: string }> {
+  return fetchApi('/api/youtube/validate', { method: 'POST' });
 }
 
-export async function runFacebookDiscovery(options: {
-  search_terms?: string[];
-  limit_per_query?: number;
+export async function runYoutubeDiscovery(opts: {
+  queries?: string[];
+  max_results_per_query?: number;
   auto_add_with_url?: boolean;
-} = {}): Promise<FacebookDiscoveryResponse> {
-  return fetchApi('/api/discovery/facebook', {
-    method: 'POST',
-    body: JSON.stringify(options),
-  });
+} = {}): Promise<YoutubeDiscoveryResponse> {
+  return fetchApi('/api/discovery/youtube', { method: 'POST', body: JSON.stringify(opts) });
 }
+
+export async function getYoutubeQueries(): Promise<{ queries: string[] }> {
+  return fetchApi('/api/discovery/youtube/queries');
+}
+
+// ─── DISCOVERY: TELEGRAM CHANNELS ────────────────────────────────────────────
+
+export interface TelegramPost {
+  channel: string;
+  channel_title: string;
+  text: string;
+  date: string;
+  message_url: string;
+  whatsapp_links: string[];
+  landing_urls: string[];
+}
+
+export interface TelegramChannelResult {
+  channel: string;
+  success: boolean;
+  posts_found: number;
+  posts: TelegramPost[];
+  error: string | null;
+  pages_added: number;
+}
+
+export interface TelegramDiscoveryResponse {
+  success: boolean;
+  channels_scanned: number;
+  total_posts: number;
+  total_whatsapp_links: number;
+  results: TelegramChannelResult[];
+  message: string;
+}
+
+export async function runTelegramDiscovery(opts: {
+  channels: string[];
+  limit_per_channel?: number;
+  only_with_links?: boolean;
+  auto_add?: boolean;
+}): Promise<TelegramDiscoveryResponse> {
+  return fetchApi('/api/discovery/telegram', { method: 'POST', body: JSON.stringify(opts) });
+}
+
+// ─── YOUTUBE SETTINGS ─────────────────────────────────────────────────────────
 
 // Admin API
 export async function getAllUsers(includePending: boolean = true): Promise<User[]> {

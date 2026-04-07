@@ -1,6 +1,8 @@
 """
-Rotas da API para configurações (Telegram e Facebook Ad Library)
-Endpoints: /api/telegram/*, /api/facebook/*
+Rotas de configuração de integrações.
+
+  /api/telegram/*  → Bot Token + Chat ID
+  /api/youtube/*   → YouTube Data API Key
 """
 
 from fastapi import APIRouter, HTTPException, Depends
@@ -12,37 +14,37 @@ from backend.models import TelegramConfig
 from backend.main import load_config, save_config, write_log
 
 router = APIRouter(tags=["settings"])
+router_telegram = APIRouter(prefix="/api/telegram", tags=["settings"])
+router_youtube = APIRouter(prefix="/api/youtube", tags=["settings"])
 
 
-# ─── FACEBOOK AD LIBRARY CONFIG ───────────────────────────────────────────────
+# ─── TELEGRAM ─────────────────────────────────────────────────────────────────
 
-class FacebookConfig(BaseModel):
-    access_token: str
-
-
-@router.get("/api/facebook/config")
-async def get_facebook_config(current_user: dict = Depends(get_current_user)):
-    """Retorna se o token do Facebook Ad Library está configurado"""
+@router_telegram.get("/config")
+async def get_telegram_config(current_user: dict = Depends(get_current_user)):
     config = load_config()
-    fb_token = config.get("facebook", {}).get("access_token", "")
+    t = config.get("telegram", {})
     return {
-        "access_token": fb_token[:8] + "..." if len(fb_token) > 8 else fb_token,
-        "configured": bool(fb_token),
+        "bot_token": t.get("bot_token", ""),
+        "chat_id": t.get("chat_id", ""),
+        "configured": bool(t.get("bot_token") and t.get("chat_id")),
     }
 
 
-@router.post("/api/facebook/save")
-async def save_facebook_config(
-    data: FacebookConfig,
+@router_telegram.post("/save")
+async def save_telegram_config(
+    config: TelegramConfig,
     current_user: dict = Depends(get_current_user),
 ):
-    """Salva o token do Facebook Ad Library"""
     try:
-        config = load_config()
-        config["facebook"] = {"access_token": data.access_token.strip()}
-        if save_config(config):
-            write_log("Token Facebook Ad Library salvo")
-            return {"success": True, "message": "Token salvo com sucesso"}
+        current = load_config()
+        current["telegram"] = {
+            "bot_token": config.bot_token.strip(),
+            "chat_id": config.chat_id.strip(),
+        }
+        if save_config(current):
+            write_log("Configuração Telegram atualizada")
+            return {"success": True, "message": "Configuração salva com sucesso"}
         raise HTTPException(status_code=500, detail="Erro ao salvar configuração")
     except HTTPException:
         raise
@@ -50,94 +52,133 @@ async def save_facebook_config(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.post("/api/facebook/validate")
-async def validate_facebook_token(current_user: dict = Depends(get_current_user)):
-    """Valida se o token salvo tem acesso à Ad Library API"""
-    from backend.services.discovery.facebook_ads_discovery import validate_token
-
+@router_telegram.post("/set-webhook")
+async def set_telegram_webhook(current_user: dict = Depends(get_current_user)):
+    """
+    Ativa o webhook do bot Telegram para receber URLs automaticamente.
+    Quando ativo, qualquer URL enviada ao bot é coletada imediatamente.
+    """
+    import os
     config = load_config()
-    token = config.get("facebook", {}).get("access_token", "").strip()
+    token = config.get("telegram", {}).get("bot_token", "").strip()
 
     if not token:
-        raise HTTPException(status_code=400, detail="Token do Facebook não configurado")
+        raise HTTPException(status_code=400, detail="Configure o bot Telegram primeiro.")
 
-    result = validate_token(token)
-    if not result["valid"]:
-        raise HTTPException(status_code=400, detail=result["message"])
+    backend_url = os.getenv("BACKEND_URL", "").strip().rstrip("/")
+    if not backend_url:
+        raise HTTPException(
+            status_code=400,
+            detail="BACKEND_URL não configurada. Adicione ao .env: BACKEND_URL=https://seu-backend.com"
+        )
 
-    return {"success": True, "message": result["message"]}
+    webhook_url = f"{backend_url}/api/telegram/bot-webhook"
+    api_url = f"https://api.telegram.org/bot{token}/setWebhook"
 
-
-# ─── TELEGRAM CONFIG ──────────────────────────────────────────────────────────
-
-router_telegram = APIRouter(prefix="/api/telegram", tags=["settings"])
-
-
-@router_telegram.get("/config")
-async def get_telegram_config(current_user: dict = Depends(get_current_user)):
-    """Retorna a configuração atual do Telegram"""
-    config = load_config()
-    telegram_config = config.get("telegram", {})
-    return {
-        "bot_token": telegram_config.get("bot_token", ""),
-        "chat_id": telegram_config.get("chat_id", ""),
-        "configured": bool(telegram_config.get("bot_token") and telegram_config.get("chat_id"))
-    }
-
-
-@router_telegram.post("/save")
-async def save_telegram_config(config: TelegramConfig, current_user: dict = Depends(get_current_user)):
-    """Salva a configuração do Telegram"""
     try:
-        current_config = load_config()
-        current_config["telegram"] = {
-            "bot_token": config.bot_token.strip(),
-            "chat_id": config.chat_id.strip()
-        }
-        
-        if save_config(current_config):
-            write_log("Configuração Telegram atualizada")
-            return {"success": True, "message": "Configuração salva com sucesso"}
-        else:
-            raise HTTPException(status_code=500, detail="Erro ao salvar configuração")
+        resp = requests.post(api_url, json={"url": webhook_url, "allowed_updates": ["message"]}, timeout=10)
+        data = resp.json()
+        if data.get("ok"):
+            write_log(f"Webhook Telegram ativado: {webhook_url}")
+            return {"success": True, "message": f"Webhook ativado! Bot pronto para receber URLs.", "webhook_url": webhook_url}
+        raise HTTPException(status_code=400, detail=data.get("description", "Erro ao ativar webhook"))
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Erro ao salvar: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router_telegram.delete("/set-webhook")
+async def remove_telegram_webhook(current_user: dict = Depends(get_current_user)):
+    """Remove o webhook do bot Telegram."""
+    config = load_config()
+    token = config.get("telegram", {}).get("bot_token", "").strip()
+    if not token:
+        raise HTTPException(status_code=400, detail="Bot Telegram não configurado.")
+    try:
+        resp = requests.post(f"https://api.telegram.org/bot{token}/deleteWebhook", timeout=10)
+        if resp.json().get("ok"):
+            return {"success": True, "message": "Webhook removido com sucesso"}
+        raise HTTPException(status_code=400, detail="Erro ao remover webhook")
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router_telegram.post("/test")
 async def test_telegram(current_user: dict = Depends(get_current_user)):
-    """Envia uma mensagem de teste para o Telegram"""
     config = load_config()
     token = config.get("telegram", {}).get("bot_token", "").strip()
     chat_id = config.get("telegram", {}).get("chat_id", "").strip()
-    
+
     if not token or not chat_id:
         raise HTTPException(status_code=400, detail="Telegram não configurado")
-    
+
     msg = (
         "*TESTE DE NOTIFICAÇÃO*\n\n"
-        f"Se você recebeu esta mensagem, o Telegram está configurado corretamente!\n\n"
+        f"Telegram configurado corretamente!\n\n"
         f"*Data/Hora:* {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}\n\n"
-        "━━━━━━━━━━━━━━━━━━━━\n"
-        "*Sistema operacional!*"
+        "━━━━━━━━━━━━━━━━━━━━\n*LinkPulse — Sistema ativo!*"
     )
-    
     url = f"https://api.telegram.org/bot{token}/sendMessage"
-    payload = {
-        "chat_id": chat_id,
-        "text": msg,
-        "parse_mode": "Markdown"
-    }
-    
+    payload = {"chat_id": chat_id, "text": msg, "parse_mode": "Markdown"}
+
     try:
         response = requests.post(url, json=payload, timeout=10)
         response.raise_for_status()
-        write_log("Teste de Telegram enviado com sucesso")
+        write_log("Teste de Telegram enviado")
         return {"success": True, "message": "Mensagem de teste enviada com sucesso!"}
     except Exception as e:
-        write_log(f"Erro no teste de Telegram: {e}")
         raise HTTPException(status_code=500, detail=f"Erro ao enviar teste: {str(e)}")
 
 
+# ─── YOUTUBE ──────────────────────────────────────────────────────────────────
+
+class YoutubeApiKeyConfig(BaseModel):
+    api_key: str
+
+
+@router_youtube.get("/config")
+async def get_youtube_config(current_user: dict = Depends(get_current_user)):
+    config = load_config()
+    key = config.get("youtube", {}).get("api_key", "")
+    return {
+        "api_key": key[:8] + "..." if len(key) > 8 else key,
+        "configured": bool(key),
+    }
+
+
+@router_youtube.post("/save")
+async def save_youtube_config(
+    data: YoutubeApiKeyConfig,
+    current_user: dict = Depends(get_current_user),
+):
+    try:
+        config = load_config()
+        config["youtube"] = {"api_key": data.api_key.strip()}
+        if save_config(config):
+            write_log("Chave YouTube API salva")
+            return {"success": True, "message": "Chave salva com sucesso"}
+        raise HTTPException(status_code=500, detail="Erro ao salvar")
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router_youtube.post("/validate")
+async def validate_youtube_key(current_user: dict = Depends(get_current_user)):
+    from backend.services.discovery.youtube_discovery import validate_api_key
+
+    config = load_config()
+    key = config.get("youtube", {}).get("api_key", "").strip()
+
+    if not key:
+        raise HTTPException(status_code=400, detail="Chave da YouTube API não configurada")
+
+    result = validate_api_key(key)
+    if not result["valid"]:
+        raise HTTPException(status_code=400, detail=result["message"])
+
+    return {"success": True, "message": result["message"]}
