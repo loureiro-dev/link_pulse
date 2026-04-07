@@ -11,6 +11,9 @@ from fastapi import FastAPI, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List, Optional
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # ============================
 # CONFIGURAÇÃO DE CAMINHOS DO PROJETO
