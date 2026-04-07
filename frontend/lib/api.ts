@@ -205,6 +205,50 @@ export async function changePassword(data: ChangePasswordData): Promise<{ messag
   });
 }
 
+// Discovery API
+export interface DiscoveredPage {
+  url: string;
+  name: string;
+  has_whatsapp: boolean | null;
+  verified: boolean;
+  added: boolean;
+  query: string | null;
+}
+
+export interface DiscoveryRequest {
+  queries?: string[];
+  max_results_per_query?: number;
+  verify?: boolean;
+  only_with_whatsapp?: boolean;
+  auto_add?: boolean;
+}
+
+export interface DiscoveryResponse {
+  success: boolean;
+  pages_found: number;
+  pages_added: number;
+  pages: DiscoveredPage[];
+  message: string;
+}
+
+export async function runDiscovery(request: DiscoveryRequest = {}): Promise<DiscoveryResponse> {
+  return fetchApi('/api/discovery/run', {
+    method: 'POST',
+    body: JSON.stringify(request),
+  });
+}
+
+export async function addDiscoveredPage(url: string, name: string): Promise<{ success: boolean; message: string }> {
+  return fetchApi('/api/discovery/add', {
+    method: 'POST',
+    body: JSON.stringify({ url, name }),
+  });
+}
+
+export async function getDefaultQueries(): Promise<{ queries: string[] }> {
+  return fetchApi('/api/discovery/queries');
+}
+
 // Admin API
 export async function getAllUsers(includePending: boolean = true): Promise<User[]> {
   return fetchApi(`/api/admin/users?include_pending=${includePending}`);
