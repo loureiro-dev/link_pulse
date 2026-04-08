@@ -29,8 +29,8 @@ export default function Sidebar() {
       {/* Logo */}
       <div className="p-6 border-b border-gray-200 dark:border-gray-700">
         <div className="flex items-center gap-3">
-          <div className="p-2 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg">
-            <LinkIcon className="w-6 h-6 text-white" />
+          <div className="flex items-center justify-center p-1 bg-white dark:bg-gray-700 rounded-lg overflow-hidden border border-gray-100 dark:border-gray-600 shadow-sm">
+            <img src="/logo.png" alt="LinkPulse Logo" className="w-10 h-10 object-contain" />
           </div>
           <div>
             <h1 className="text-xl font-bold text-gray-900 dark:text-white">LinkPulse</h1>

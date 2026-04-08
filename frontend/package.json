@@ -10,7 +10,7 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.102.1",
+    "@supabase/supabase-js": "^2.48.1",
     "axios": "^1.6.8",
     "clsx": "^2.1.1",
     "cookies-next": "^4.3.0",

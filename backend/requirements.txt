@@ -11,4 +11,7 @@ passlib[bcrypt]==1.7.4
 bcrypt==4.3.0
 python-dotenv==1.2.1
 gunicorn==21.2.0
-
+supabase==2.11.0
+duckduckgo-search==7.3.2
+selenium==4.29.0
+webdriver-manager==4.0.2
