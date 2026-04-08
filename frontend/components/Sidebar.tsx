@@ -29,16 +29,21 @@ export default function Sidebar() {
   return (
     <aside className="w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col">
       {/* Logo */}
-      <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-        <div className="flex flex-col items-center gap-3 text-center">
-          <div className="p-3 bg-white dark:bg-gray-800 rounded-2xl shadow-xl shadow-blue-500/10 border border-gray-100 dark:border-gray-700">
-            <Image src="/logo.png" alt="LinkPulse Logo" width={64} height={64} className="w-16 h-16 object-contain hover:scale-105 transition-transform duration-300" />
+      <div className="p-8 border-b border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-900/20">
+        <div className="flex flex-col items-center gap-4 text-center">
+          <div className="w-full aspect-video relative flex items-center justify-center">
+            <Image 
+              src="/logo.png" 
+              alt="LinkPulse Logo" 
+              fill
+              className="object-contain hover:scale-105 transition-transform duration-300" 
+            />
           </div>
-          <div>
-            <p className="text-xs font-bold text-blue-600 dark:text-blue-400 uppercase tracking-widest">
-              LinkPulse IA
+          <div className="space-y-1">
+            <p className="text-sm font-black text-blue-600 dark:text-blue-400 uppercase tracking-[0.2em]">
+              LINKPULSE IA
             </p>
-            <p className="text-[10px] text-gray-400 dark:text-gray-500 mt-0.5">
+            <p className="text-[10px] font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wider">
               Sistema de Monitoramento e Coleta
             </p>
           </div>
