@@ -14,9 +14,14 @@ from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
 from typing import List, Optional
 
-from backend.auth.middleware import get_current_user
-from backend.db.pages import add_page
-from backend.db.settings import get_setting, save_setting
+try:
+    from backend.auth.middleware import get_current_user
+    from backend.db.pages import add_page
+    from backend.db.settings import get_setting, save_setting
+except ImportError:
+    from auth.middleware import get_current_user
+    from db.pages import add_page
+    from db.settings import get_setting, save_setting
 
 router = APIRouter(prefix="/api/discovery", tags=["discovery"])
 
@@ -131,7 +136,10 @@ class DuckDuckGoResponse(BaseModel):
 @router.get("/duckduckgo/queries")
 async def get_ddg_queries(current_user: dict = Depends(get_current_user)):
     """Retorna as queries padrão do DuckDuckGo."""
-    from backend.services.discovery.page_discovery import DEFAULT_QUERIES
+    try:
+        from backend.services.discovery.page_discovery import DEFAULT_QUERIES
+    except ImportError:
+        from services.discovery.page_discovery import DEFAULT_QUERIES
     return {"queries": DEFAULT_QUERIES}
 
 
@@ -141,7 +149,10 @@ async def run_duckduckgo_discovery(
     current_user: dict = Depends(get_current_user),
 ):
     """Descobre páginas de lançamento via DuckDuckGo (sem API key)."""
-    from backend.services.discovery.page_discovery import discover_pages
+    try:
+        from backend.services.discovery.page_discovery import discover_pages
+    except ImportError:
+        from services.discovery.page_discovery import discover_pages
 
     user_id = current_user["id"]
 
@@ -166,8 +177,12 @@ async def run_duckduckgo_discovery(
     # Classificação IA (opcional)
     ai_cfg = None
     if request.use_ai:
-        from backend.api.settings import _get_ai_config
-        from backend.services.ai.classifier import classify_batch
+        try:
+            from backend.api.settings import _get_ai_config
+            from backend.services.ai.classifier import classify_batch
+        except ImportError:
+            from api.settings import _get_ai_config
+            from services.ai.classifier import classify_batch
         ai_cfg = _get_ai_config(user_id)
         if ai_cfg.get("api_key") and ai_cfg.get("enabled"):
             pages = classify_batch(
@@ -265,7 +280,10 @@ class YoutubeResponse(BaseModel):
 @router.get("/youtube/queries")
 async def get_youtube_queries(current_user: dict = Depends(get_current_user)):
     """Retorna as queries padrão do YouTube."""
-    from backend.services.discovery.youtube_discovery import YT_DEFAULT_QUERIES
+    try:
+        from backend.services.discovery.youtube_discovery import YT_DEFAULT_QUERIES
+    except ImportError:
+        from services.discovery.youtube_discovery import YT_DEFAULT_QUERIES
     return {"queries": YT_DEFAULT_QUERIES}
 
 
@@ -275,8 +293,12 @@ async def run_youtube_discovery(
     current_user: dict = Depends(get_current_user),
 ):
     """Descobre vídeos de lançamento no YouTube e extrai links WhatsApp."""
-    from backend.services.discovery.youtube_discovery import discover_from_youtube
-    from backend.db.settings import get_youtube_api_key
+    try:
+        from backend.services.discovery.youtube_discovery import discover_from_youtube
+        from backend.db.settings import get_youtube_api_key
+    except ImportError:
+        from services.discovery.youtube_discovery import discover_from_youtube
+        from db.settings import get_youtube_api_key
 
     user_id = current_user["id"]
     api_key = get_youtube_api_key(user_id).strip()
@@ -308,8 +330,12 @@ async def run_youtube_discovery(
 
     # Classificação IA nas landing URLs de cada vídeo (opcional)
     if request.use_ai:
-        from backend.api.settings import _get_ai_config
-        from backend.services.ai.classifier import classify_page as ai_classify
+        try:
+            from backend.api.settings import _get_ai_config
+            from backend.services.ai.classifier import classify_page as ai_classify
+        except ImportError:
+            from api.settings import _get_ai_config
+            from services.ai.classifier import classify_page as ai_classify
         ai_cfg = _get_ai_config(user_id)
         if ai_cfg.get("api_key") and ai_cfg.get("enabled"):
             for v in videos:
@@ -415,7 +441,10 @@ async def quick_collect(
     Adiciona às páginas monitoradas e scrapa em busca de grupos WhatsApp.
     Ideal para URLs recebidas via Telegram ou outras fontes.
     """
-    from backend.services.discovery.quick_collect import collect_url_now
+    try:
+        from backend.services.discovery.quick_collect import collect_url_now
+    except ImportError:
+        from services.discovery.quick_collect import collect_url_now
 
     if not request.urls:
         raise HTTPException(status_code=400, detail="Informe pelo menos uma URL.")
@@ -501,8 +530,12 @@ async def run_facebook_library_discovery(
     Scraping automático da Biblioteca de Anúncios do Facebook.
     Usa Selenium + IA para encontrar e filtrar landing pages de lançamentos.
     """
-    from backend.services.discovery.facebook_discovery import discover_from_facebook_library
-    from backend.api.settings import _get_ai_config
+    try:
+        from backend.services.discovery.facebook_discovery import discover_from_facebook_library
+        from backend.api.settings import _get_ai_config
+    except ImportError:
+        from services.discovery.facebook_discovery import discover_from_facebook_library
+        from api.settings import _get_ai_config
 
     user_id = current_user["id"]
 

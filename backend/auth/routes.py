@@ -6,8 +6,12 @@ Handles user registration and login endpoints
 from fastapi import APIRouter, HTTPException, status, Depends
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from backend.auth.models import UserRegister, UserLogin, TokenResponse, UserResponse
-from backend.auth.jwt import create_access_token
-from backend.db.users import create_user, authenticate_user, get_user_by_id
+try:
+    from backend.auth.middleware import get_current_user, create_access_token
+    from backend.db.users import authenticate_user, create_user, get_user_by_email, get_user_by_id
+except ImportError:
+    from auth.middleware import get_current_user, create_access_token
+    from db.users import authenticate_user, create_user, get_user_by_email, get_user_by_id
 from datetime import timedelta
 
 router = APIRouter(prefix="/auth", tags=["authentication"])

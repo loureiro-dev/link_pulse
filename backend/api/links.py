@@ -5,15 +5,20 @@ Endpoints: /api/links, /api/stats
 
 from fastapi import APIRouter, HTTPException, Depends
 from typing import List
-from backend.auth.middleware import get_current_user
-from backend.db.connection import list_links
+try:
+    from backend.auth.middleware import get_current_user
+    from backend.db.connection import list_links
+    from backend.main import LAST_RUN_FILE
+except ImportError:
+    from auth.middleware import get_current_user
+    from db.connection import list_links
+    from main import LAST_RUN_FILE
 from backend.models import LinkResponse
 import os
 from datetime import datetime
 
 router = APIRouter(prefix="/api", tags=["links"])
 
-# Configuração de paths (importa de main.py)
 from backend.main import LAST_RUN_FILE
 
 @router.get("/links", response_model=List[LinkResponse])

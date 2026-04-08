@@ -9,9 +9,14 @@ from fastapi import APIRouter, HTTPException, Depends
 import requests
 from datetime import datetime
 from pydantic import BaseModel
-from backend.auth.middleware import get_current_user
-from backend.models import TelegramConfig
-from backend.main import load_config, save_config, write_log
+try:
+    from backend.auth.middleware import get_current_user
+    from backend.models import TelegramConfig
+    from backend.main import load_config, save_config, write_log
+except ImportError:
+    from auth.middleware import get_current_user
+    from models import TelegramConfig
+    from main import load_config, save_config, write_log
 
 router = APIRouter(tags=["settings"])
 router_telegram = APIRouter(prefix="/api/telegram", tags=["settings"])
@@ -170,7 +175,10 @@ async def save_youtube_config(
 
 @router_youtube.post("/validate")
 async def validate_youtube_key(current_user: dict = Depends(get_current_user)):
-    from backend.services.discovery.youtube_discovery import validate_api_key
+    try:
+        from backend.services.discovery.youtube_discovery import validate_api_key
+    except ImportError:
+        from services.discovery.youtube_discovery import validate_api_key
 
     config = load_config()
     key = config.get("youtube", {}).get("api_key", "").strip()
@@ -228,7 +236,10 @@ async def save_ai_config(
 
 @router_ai.post("/validate")
 async def validate_ai_key(current_user: dict = Depends(get_current_user)):
-    from backend.services.ai.google_gemini import GeminiService
+    try:
+        from backend.services.ai.google_gemini import GeminiService
+    except ImportError:
+        from services.ai.google_gemini import GeminiService
     
     config = load_config()
     ai_cfg = config.get("ai", {})

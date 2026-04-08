@@ -5,11 +5,18 @@ Handles user approval, user management, and admin operations
 
 from fastapi import APIRouter, HTTPException, status, Depends
 from typing import List
-from backend.auth.middleware import get_current_user
-from backend.auth.models import UserResponse
-from backend.db.users import (
-    list_all_users, approve_user, reject_user, is_admin, get_user_by_id
-)
+try:
+    from backend.auth.middleware import get_current_user
+    from backend.auth.models import UserResponse
+    from backend.db.users import (
+        list_all_users, approve_user, reject_user, is_admin, get_user_by_id
+    )
+except ImportError:
+    from auth.middleware import get_current_user
+    from auth.models import UserResponse
+    from db.users import (
+        list_all_users, approve_user, reject_user, is_admin, get_user_by_id
+    )
 
 router = APIRouter(prefix="/api/admin", tags=["admin"])
 

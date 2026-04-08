@@ -4,12 +4,20 @@ Handles user profile updates and password changes
 """
 
 from fastapi import APIRouter, HTTPException, status, Depends
-from backend.auth.middleware import get_current_user
-from backend.auth.models import UserResponse, UpdateProfileRequest, ChangePasswordRequest
-from backend.db.users import (
-    update_user_profile, update_user_password, get_user_by_id, get_user_by_email
-)
-from backend.auth.jwt import verify_password
+try:
+    from backend.auth.middleware import get_current_user
+    from backend.auth.models import UserResponse, UpdateProfileRequest, ChangePasswordRequest
+    from backend.db.users import (
+        update_user_profile, update_user_password, get_user_by_id, get_user_by_email
+    )
+    from backend.auth.jwt import verify_password
+except ImportError:
+    from auth.middleware import get_current_user
+    from auth.models import UserResponse, UpdateProfileRequest, ChangePasswordRequest
+    from db.users import (
+        update_user_profile, update_user_password, get_user_by_id, get_user_by_email
+    )
+    from auth.jwt import verify_password
 
 router = APIRouter(prefix="/api/profile", tags=["profile"])
 

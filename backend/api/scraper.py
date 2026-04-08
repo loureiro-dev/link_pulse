@@ -4,18 +4,30 @@ Endpoints: /api/scraper/run, /api/scraper/last-run
 """
 
 from fastapi import APIRouter, HTTPException, Depends
-from backend.auth.middleware import get_current_user
-from backend.models import ScraperResponse
-from backend.main import (
-    load_pages, 
-    write_log, 
-    LAST_RUN_FILE,
-    collect_from_page,
-    normalize_whatsapp_link,
-    is_group_link,
-    save_links,
-    send_telegram_message
-)
+try:
+    from backend.auth.middleware import get_current_user
+    from backend.models import ScraperResponse
+    from backend.main import (
+        write_log, 
+        LAST_RUN_FILE,
+        collect_from_page,
+        normalize_whatsapp_link,
+        is_group_link,
+        save_links,
+        send_telegram_message
+    )
+except ImportError:
+    from auth.middleware import get_current_user
+    from models import ScraperResponse
+    from main import (
+        write_log, 
+        LAST_RUN_FILE,
+        collect_from_page,
+        normalize_whatsapp_link,
+        is_group_link,
+        save_links,
+        send_telegram_message
+    )
 from datetime import datetime
 import os
 
@@ -31,7 +43,10 @@ async def run_scraper(current_user: dict = Depends(get_current_user)):
     try:
         user_id = current_user["id"]
         write_log(f"Iniciando coleta de links... User: {user_id}")
-        from backend.db.pages import load_pages
+        try:
+            from backend.db.pages import load_pages
+        except ImportError:
+            from db.pages import load_pages
         pages = load_pages(user_id)
         
         if not pages:
