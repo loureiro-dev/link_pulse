@@ -173,35 +173,6 @@ from backend.models import (
 # ============================================================================
 # Funções utilitárias para gerenciamento de páginas, configuração e logs
 
-def load_pages():
-    """Carrega as páginas cadastradas do arquivo CSV"""
-    import csv
-    if not os.path.exists(PAGES_FILE):
-        return []
-    try:
-        pages = []
-        with open(PAGES_FILE, 'r', encoding='utf-8') as f:
-            reader = csv.DictReader(f)
-            for row in reader:
-                pages.append(row)
-        return pages
-    except Exception:
-        return []
-
-def save_pages(pages: List[dict]):
-    """Salva as páginas no arquivo CSV"""
-    import csv
-    if not pages:
-        # Se não há páginas, cria arquivo vazio com cabeçalho
-        with open(PAGES_FILE, 'w', encoding='utf-8', newline='') as f:
-            writer = csv.DictWriter(f, fieldnames=['url', 'name'])
-            writer.writeheader()
-        return
-    
-    with open(PAGES_FILE, 'w', encoding='utf-8', newline='') as f:
-        writer = csv.DictWriter(f, fieldnames=['url', 'name'])
-        writer.writeheader()
-        writer.writerows(pages)
 
 def load_config():
     """Carrega a configuração do Telegram do arquivo JSON"""

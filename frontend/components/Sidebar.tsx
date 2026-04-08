@@ -32,14 +32,15 @@ export default function Sidebar() {
   return (
     <aside className="w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col">
       {/* Logo */}
-      <div className="p-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-900/20">
-        <div className="flex flex-col items-center text-center">
-          <div className="w-full aspect-video relative flex items-center justify-center">
+      <div className="p-3 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
+        <div className="flex flex-col items-center">
+          <div className="w-full h-24 relative flex items-center justify-center">
             <Image 
               src="/logo.png" 
               alt="LinkPulse Logo" 
               fill
-              className="object-contain hover:scale-105 transition-transform duration-300" 
+              className="object-contain px-2 py-1" 
+              priority
             />
           </div>
         </div>

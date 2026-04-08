@@ -45,6 +45,33 @@ def extract_whatsapp_links_from_html(html: str) -> List[str]:
 
     return list(links)
 
+def fetch_group_metadata(url: str) -> str:
+    """Acessa o link de convite do WhatsApp/Telegram e tenta extrair o Nome (og:title)"""
+    headers = {"User-Agent": USER_AGENT}
+    try:
+        # Aumentamos o timeout para 10s para evitar travamentos
+        resp = requests.get(url, headers=headers, timeout=10)
+        resp.raise_for_status()
+        html = resp.text
+        soup = BeautifulSoup(html, 'html.parser')
+        
+        # Procura por og:title (padrão de convites)
+        og_title = soup.find('meta', property='og:title') or soup.find('meta', attrs={"name": "og:title"})
+        if og_title and og_title.get('content'):
+            titulo = og_title['content']
+            # Filtra nomes genéricos
+            if titulo in ["WhatsApp Group Invite", "Join group chat on Telegram"]:
+                return "Grupo sem nome exposto"
+            return titulo
+        
+        # Fallback para a tag <title>
+        if soup.title and soup.title.string:
+            return soup.title.string.strip()
+            
+        return "Grupo Sem Título"
+    except Exception:
+        return "Nome Indisponível"
+
 def collect_from_page(url: str) -> Tuple[List[str], bool, bool]:
     """
     Collect WhatsApp links from a page

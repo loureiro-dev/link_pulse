@@ -103,6 +103,8 @@ def discover_from_youtube(
     api_key: str,
     queries: Optional[List[str]] = None,
     max_results_per_query: int = 10,
+    filter_tutorials: bool = True,
+    only_with_links: bool = False,
 ) -> List[Dict]:
     """
     Busca vídeos de lançamentos no YouTube e extrai links WhatsApp e landing pages.
@@ -147,11 +149,30 @@ def discover_from_youtube(
         video_ids = [r["video_id"] for r in results]
         descriptions = _get_full_descriptions(api_key, video_ids)
 
+        filtered_results = []
         for r in results:
             full_desc = descriptions.get(r["video_id"], r["description"])
+            
+            # Filtro de Tutoriais (opcional)
+            if filter_tutorials:
+                low_title = r["title"].lower()
+                low_desc = full_desc.lower()
+                if any(kw in low_title or kw in low_desc for kw in ["tutorial", "como fazer", "passo a passo", "aula 1"]):
+                    # Se for tutorial/aula, provavelmente não é um "lançamento" novo
+                    continue
+
             r["description"] = full_desc[:400]
             extracted = _extract_urls(full_desc)
             r["whatsapp_links"] = extracted["whatsapp"]
             r["landing_urls"] = extracted["landing"]
+
+            # Filtro de Links (opcional)
+            if only_with_links:
+                if not r["whatsapp_links"] and not r["landing_urls"]:
+                    continue
+
+            filtered_results.append(r)
+        
+        return filtered_results
 
     return results

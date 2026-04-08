@@ -247,3 +247,16 @@ async def validate_ai_key(current_user: dict = Depends(get_current_user)):
         return {"success": False, "message": "Sem resposta da API"}
     except Exception as e:
         return {"success": False, "message": f"Erro de validação: {str(e)}"}
+
+# ─── HELPER FUNCTIONS ─────────────────────────────────────────────────────────
+
+def _get_ai_config(user_id: int):
+    """Retorna configuração de IA (para uso interno)"""
+    config = load_config()
+    ai = config.get("ai", {})
+    return {
+        "api_key": ai.get("api_key", ""),
+        "provider": ai.get("provider", "gemini"),
+        "min_confidence": ai.get("min_confidence", 0.6),
+        "enabled": ai.get("enabled", True)
+    }
