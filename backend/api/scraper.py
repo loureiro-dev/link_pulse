@@ -73,17 +73,23 @@ async def run_scraper(current_user: dict = Depends(get_current_user)):
             cleaned = list(dict.fromkeys(cleaned))
             
             if cleaned:
-                # Salva no banco de dados associado ao usuário
-                save_links(cleaned, source=name, user_id=user_id)
+                # Importa o extrator de metadados
+                from backend.services.collectors.requests_collector import fetch_group_metadata
                 
-                # Prepara resposta e envia notificações
+                # Salva no banco de dados associado ao usuário
                 for link in cleaned:
+                    # Tenta pegar o nome real do grupo
+                    real_name = fetch_group_metadata(link)
+                    display_name = f"{real_name} (via {name})" if real_name != "Nome Indisponível" else name
+                    
+                    save_links([link], source=display_name, user_id=user_id)
+                    
                     all_found.append({
                         "url": link,
-                        "source": name,
+                        "source": display_name,
                         "found_at": datetime.utcnow().isoformat()
                     })
-                    send_telegram_message(link, name)
+                    send_telegram_message(link, display_name)
         
         # Registra última execução por usuário
         msg = f"Coleta finalizada. Páginas verificadas: {total_checked}, links encontrados: {len(all_found)}"
