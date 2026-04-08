@@ -388,7 +388,7 @@ function AiTab() {
         </div>
         <p>
           A IA analisa as páginas e anúncios encontrados em tempo real. Ela busca por gatilhos de lançamentos 
-          digitais como <strong>"grupo vip"</strong>, <strong>"workshop"</strong> e <strong>"masterclass"</strong>.
+          digitais como <strong>&quot;grupo vip&quot;</strong>, <strong>&quot;workshop&quot;</strong> e <strong>&quot;masterclass&quot;</strong>.
         </p>
         <p className="text-xs opacity-75 italic">
           * A mineração consome tokens da sua cota do Gemini (versão 1.5-flash é gratuita até certo limite).

@@ -79,14 +79,14 @@ export default function FAQPage() {
           </div>
         </AccordionItem>
 
-        <AccordionItem title="Como ativar a Inteligência Artificial (Gemini)?" icon={Brain}>
+        <AccordionItem title="Como a Inteligência Artificial (Gemini) me ajuda?" icon={Brain}>
           <div className="space-y-4">
             <p>O Gemini é o motor que classifica os links e identifica se são de lançamentos reais.</p>
             <ol className="list-decimal list-inside space-y-2">
               <li>Acesse o <a href="https://aistudio.google.com/app/apikey" target="_blank" className="underline font-bold">Google AI Studio</a>.</li>
               <li>Crie uma chave de API gratuita para o modelo <strong>Gemini 1.5 Flash</strong>.</li>
               <li>Vá em <Link href="/telegram" className="text-blue-600 font-bold hover:underline inline-flex items-center gap-1">Configurações → IA / Gemini <ExternalLink className="w-3 h-3"/></Link>.</li>
-              <li>Ative a <strong>"Mineração Seletiva"</strong> para filtrar apenas links de alta qualidade.</li>
+              <li>Ative a <strong>&quot;Mineração Seletiva&quot;</strong> para filtrar apenas links de alta qualidade.</li>
             </ol>
           </div>
         </AccordionItem>
@@ -127,9 +127,9 @@ export default function FAQPage() {
           <div className="mt-2 space-y-2">
             <p>Vá em <Link href="/discovery" className="text-blue-600 font-bold underline underline-offset-2 inline-flex items-center gap-1">Minerar <ExternalLink className="w-3 h-3"/></Link> e use termos como:</p>
             <div className="flex flex-wrap gap-2 text-xs">
-              <span className="px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded border border-gray-200 dark:border-gray-600 italic">"Grupo VIP"</span>
-              <span className="px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded border border-gray-200 dark:border-gray-600 italic">"Workshop Gratuito"</span>
-              <span className="px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded border border-gray-200 dark:border-gray-600 italic">"Inscrição Aberta"</span>
+              <span className="px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded border border-gray-200 dark:border-gray-600 italic">&quot;Grupo VIP&quot;</span>
+              <span className="px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded border border-gray-200 dark:border-gray-600 italic">&quot;Workshop Gratuito&quot;</span>
+              <span className="px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded border border-gray-200 dark:border-gray-600 italic">&quot;Inscrição Aberta&quot;</span>
             </div>
           </div>
         </AccordionItem>

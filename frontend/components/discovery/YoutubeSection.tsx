@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { runYoutubeDiscovery, addDiscoveredPage, getYoutubeConfig, YoutubeVideoResult } from '@/lib/api';
 import { Youtube, CheckCircle, AlertCircle, Plus, ExternalLink, Loader2, Info, KeyRound, Settings } from 'lucide-react';
 import Link from 'next/link';
+import Image from 'next/image';
 
 export default function YoutubeSection() {
   const [configured, setConfigured] = useState(false);
