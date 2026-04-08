@@ -32,11 +32,13 @@ export default function Header() {
     <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-            LinkPulse
-          </h2>
+          <div className="flex items-center gap-2">
+            <h2 className="text-2xl font-bold bg-gradient-to-r from-sky-400 to-blue-600 bg-clip-text text-transparent">
+              LinkPulse IA
+            </h2>
+          </div>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-            Sistema de Monitoramento de Links WhatsApp
+            Sistema de Monitoramento e Coleta
           </p>
         </div>
         

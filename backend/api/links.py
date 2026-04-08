@@ -69,3 +69,23 @@ async def get_stats(current_user: dict = Depends(get_current_user)):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Erro ao buscar estatísticas: {str(e)}")
 
+
+@router.delete("/links/all")
+async def delete_all_user_links(current_user: dict = Depends(get_current_user)):
+    """Deleta todos os links do usuário logado"""
+    from backend.db.connection import delete_all_links
+    success = delete_all_links(current_user["id"])
+    if not success:
+        raise HTTPException(status_code=500, detail="Erro ao deletar todos os links.")
+    return {"success": True, "message": "Todos os links foram apagados."}
+
+
+@router.delete("/links")
+async def delete_single_link(url: str, current_user: dict = Depends(get_current_user)):
+    """Deleta um link específico do usuário logado"""
+    from backend.db.connection import delete_link
+    success = delete_link(url, current_user["id"])
+    if not success:
+        raise HTTPException(status_code=404, detail="Link não encontrado ou erro ao deletar.")
+    return {"success": True, "message": "Link excluído."}
+

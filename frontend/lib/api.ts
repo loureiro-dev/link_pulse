@@ -140,6 +140,18 @@ export async function getLinks(limit: number = 1000): Promise<Link[]> {
   return fetchApi(`/api/links?limit=${limit}`);
 }
 
+export async function deleteLink(url: string): Promise<void> {
+  await fetchApi(`/api/links?url=${encodeURIComponent(url)}`, {
+    method: 'DELETE',
+  });
+}
+
+export async function deleteAllLinks(): Promise<void> {
+  await fetchApi('/api/links/all', {
+    method: 'DELETE',
+  });
+}
+
 export async function getPages(): Promise<Page[]> {
   return fetchApi('/api/pages');
 }

@@ -13,16 +13,9 @@ from typing import Optional
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "")
 TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID", "")
 
-def send_message(link: str, source: str = "unknown") -> bool:
+def send_message(link: str, source: str = "unknown", link_type: str = "group", is_relaunch: bool = False) -> bool:
     """
-    Send formatted notification to Telegram
-    
-    Args:
-        link: WhatsApp link found
-        source: Source/campaign name
-        
-    Returns:
-        True if sent successfully, False otherwise
+    Send formatted notification to Telegram with specialized alerts.
     """
     token = TELEGRAM_BOT_TOKEN or os.getenv("TELEGRAM_BOT_TOKEN", "")
     chat_id = TELEGRAM_CHAT_ID or os.getenv("TELEGRAM_CHAT_ID", "")
@@ -33,12 +26,25 @@ def send_message(link: str, source: str = "unknown") -> bool:
 
     timestamp = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
 
+    # Ícones e Avisos
+    header = "🚀 *Novo grupo encontrado!*"
+    warning = ""
+    
+    if is_relaunch:
+        header = "🔄 *RELANÇAMENTO DETECTADO!*"
+        warning += "\n⚠️ _Esta página já teve grupos antes. Um novo lançamento pode estar em andamento!_\n"
+        
+    if link_type == 'community':
+        header = "📢 *COMUNIDADE DETECTADA!*"
+        warning += "\n🚩 *AVISO:* Este link é de uma Comunidade WhatsApp, não de um grupo comum.\n"
+
     msg = (
-        "🚀 *Novo grupo encontrado!*\n\n"
+        f"{header}\n\n"
         f"📌 *Campanha:* `{source}`\n"
         f"🔗 *Link:* {link}\n"
-        f"📅 *Encontrado:* {timestamp}\n\n"
-        "Monitoramento ativo ✔️"
+        f"📅 *Encontrado:* {timestamp}\n"
+        f"{warning}\n"
+        "Monitoramento LinkPulse IA ✔️"
     )
 
     url = f"https://api.telegram.org/bot{token}/sendMessage"

@@ -155,7 +155,7 @@ export default function DashboardPage() {
             Atualizar
           </button>
         </div>
-        <LinksTable links={links.slice(0, 50)} />
+        <LinksTable links={links.slice(0, 50)} onRefresh={loadData} />
       </div>
     </div>
   );

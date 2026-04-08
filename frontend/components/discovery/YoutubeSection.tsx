@@ -1,19 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { runYoutubeDiscovery, addDiscoveredPage, getYoutubeConfig, getAiConfig, YoutubeVideoResult } from '@/lib/api';
-import { Youtube, CheckCircle, AlertCircle, Plus, ExternalLink, Loader2, Info, KeyRound, Settings, Bot } from 'lucide-react';
+import { runYoutubeDiscovery, addDiscoveredPage, getYoutubeConfig, YoutubeVideoResult } from '@/lib/api';
+import { Youtube, CheckCircle, AlertCircle, Plus, ExternalLink, Loader2, Info, KeyRound, Settings } from 'lucide-react';
 import Link from 'next/link';
-import KeywordManager from './KeywordManager';
-
-const YT_DEFAULT_QUERIES = [
-  'chat.whatsapp.com grupo lançamento',
-  'entre no grupo vip whatsapp lançamento 2025',
-  'semana do lançamento grupo whatsapp exclusivo',
-  'masterclass gratuita grupo whatsapp lançamento hotmart',
-  'vagas abertas grupo whatsapp imersão lançamento',
-  'acesse o grupo whatsapp lançamento infoproduto',
-];
 
 export default function YoutubeSection() {
   const [configured, setConfigured] = useState(false);
@@ -22,16 +12,11 @@ export default function YoutubeSection() {
   const [error, setError] = useState<string | null>(null);
   const [maxResults, setMaxResults] = useState(10);
   const [autoAdd, setAutoAdd] = useState(false);
-  const [filterTutorials, setFilterTutorials] = useState(true);
-  const [onlyWithLinks, setOnlyWithLinks] = useState(false);
-  const [useAi, setUseAi] = useState(false);
-  const [aiConfigured, setAiConfigured] = useState(false);
   const [addedUrls, setAddedUrls] = useState<Set<string>>(new Set());
   const [addingUrl, setAddingUrl] = useState<string | null>(null);
 
   useEffect(() => {
     getYoutubeConfig().then(c => setConfigured(c.configured)).catch(() => {});
-    getAiConfig().then(c => setAiConfigured(c.configured && c.enabled)).catch(() => {});
   }, []);
 
   const handleSearch = async () => {
@@ -40,13 +25,7 @@ export default function YoutubeSection() {
     setResult(null);
     setAddedUrls(new Set());
     try {
-      const res = await runYoutubeDiscovery({
-        max_results_per_query: maxResults,
-        auto_add_with_url: autoAdd,
-        filter_tutorials: filterTutorials,
-        only_with_links: onlyWithLinks,
-        use_ai: useAi && aiConfigured,
-      });
+      const res = await runYoutubeDiscovery({ max_results_per_query: maxResults, auto_add_with_url: autoAdd });
       setResult(res);
     } catch (err: any) {
       setError(err.message || 'Erro na busca');
@@ -74,8 +53,8 @@ export default function YoutubeSection() {
           Para usar o módulo YouTube, configure sua chave da YouTube Data API v3 nas Configurações.
           É gratuita — 10.000 requisições/dia.
         </p>
-        <Link href="/telegram"
-          className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-blue-500 to-purple-600 hover:shadow-lg text-white rounded-lg font-medium transition-all">
+        <Link href="/settings"
+          className="flex items-center gap-2 px-5 py-2.5 bg-red-500 hover:bg-red-600 text-white rounded-lg font-medium transition-colors">
           <Settings className="w-4 h-4" />Ir para Configurações
         </Link>
       </div>
@@ -91,15 +70,6 @@ export default function YoutubeSection() {
           Extrai links de WhatsApp e landing pages das <strong>descrições completas</strong> dos vídeos.
           Quota gratuita: 10.000 unidades/dia (≈ 100 buscas).
         </p>
-      </div>
-
-      {/* Gerenciador de palavras-chave */}
-      <div className="border border-gray-200 dark:border-gray-700 rounded-xl p-4 bg-gray-50 dark:bg-gray-700/30">
-        <KeywordManager
-          module="youtube"
-          label="Palavras-chave customizadas (somam às padrão)"
-          defaultQueries={YT_DEFAULT_QUERIES}
-        />
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -123,53 +93,6 @@ export default function YoutubeSection() {
             <span className="text-sm text-gray-700 dark:text-gray-300">Adicionar 1ª URL automaticamente</span>
           </label>
         </div>
-      </div>
-
-      {/* Filtros de qualidade */}
-      <div className="p-3 bg-gray-50 dark:bg-gray-700/30 border border-gray-200 dark:border-gray-600 rounded-lg space-y-3">
-        <p className="text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wide">Filtros de qualidade</p>
-        <label className="flex items-center gap-3 cursor-pointer">
-          <div className="relative">
-            <input type="checkbox" checked={filterTutorials} onChange={e => setFilterTutorials(e.target.checked)} className="sr-only" />
-            <div className={`w-11 h-6 rounded-full transition-colors ${filterTutorials ? 'bg-red-500' : 'bg-gray-300 dark:bg-gray-600'}`}>
-              <div className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${filterTutorials ? 'translate-x-5' : ''}`} />
-            </div>
-          </div>
-          <div>
-            <span className="text-sm text-gray-700 dark:text-gray-300 font-medium">Ignorar tutoriais e reviews</span>
-            <p className="text-xs text-gray-500 dark:text-gray-400">Remove vídeos com título "como fazer", "nova maneira", etc.</p>
-          </div>
-        </label>
-        <label className="flex items-center gap-3 cursor-pointer">
-          <div className="relative">
-            <input type="checkbox" checked={onlyWithLinks} onChange={e => setOnlyWithLinks(e.target.checked)} className="sr-only" />
-            <div className={`w-11 h-6 rounded-full transition-colors ${onlyWithLinks ? 'bg-red-500' : 'bg-gray-300 dark:bg-gray-600'}`}>
-              <div className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${onlyWithLinks ? 'translate-x-5' : ''}`} />
-            </div>
-          </div>
-          <div>
-            <span className="text-sm text-gray-700 dark:text-gray-300 font-medium">Apenas vídeos com links</span>
-            <p className="text-xs text-gray-500 dark:text-gray-400">Oculta vídeos sem WhatsApp ou landing page na descrição.</p>
-          </div>
-        </label>
-
-        {/* Toggle IA */}
-        <label className="flex items-center gap-3 cursor-pointer">
-          <div className="relative">
-            <input type="checkbox" checked={useAi} onChange={e => setUseAi(e.target.checked)} className="sr-only" />
-            <div className={`w-11 h-6 rounded-full transition-colors ${useAi ? 'bg-purple-500' : 'bg-gray-300 dark:bg-gray-600'}`}>
-              <div className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${useAi ? 'translate-x-5' : ''}`} />
-            </div>
-          </div>
-          <div className="flex-1">
-            <div className="flex items-center gap-2">
-              <Bot className="w-4 h-4 text-purple-500" />
-              <span className="text-sm text-gray-700 dark:text-gray-300 font-medium">Classificar landing pages com IA</span>
-              {!aiConfigured && <span className="text-xs bg-yellow-100 text-yellow-700 px-1.5 py-0.5 rounded">requer config</span>}
-            </div>
-            <p className="text-xs text-gray-500 dark:text-gray-400">IA analisa os links extraídos e indica se são páginas de captura.</p>
-          </div>
-        </label>
       </div>
 
       <button onClick={handleSearch} disabled={searching}
@@ -201,29 +124,9 @@ export default function YoutubeSection() {
                   <div className="flex gap-3 mb-3">
                     {video.thumbnail && <img src={video.thumbnail} alt="" className="w-24 h-16 object-cover rounded shrink-0" />}
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-start gap-2">
-                        <a href={video.video_url} target="_blank" rel="noopener noreferrer"
-                          className="font-medium text-gray-900 dark:text-white text-sm hover:text-red-500 line-clamp-2 flex-1">{video.title}</a>
-                        {video.ai_status === 'approved' && (
-                          <span className="shrink-0 text-xs px-1.5 py-0.5 bg-green-100 text-green-700 rounded-full font-medium">
-                            ✓ IA {Math.round((video.ai_confidence || 0) * 100)}%
-                          </span>
-                        )}
-                        {video.ai_status === 'review' && (
-                          <span className="shrink-0 text-xs px-1.5 py-0.5 bg-yellow-100 text-yellow-700 rounded-full font-medium">
-                            ? Revisar
-                          </span>
-                        )}
-                        {video.ai_status === 'rejected' && (
-                          <span className="shrink-0 text-xs px-1.5 py-0.5 bg-red-100 text-red-600 rounded-full font-medium">
-                            ✗ Rejeitado
-                          </span>
-                        )}
-                      </div>
+                      <a href={video.video_url} target="_blank" rel="noopener noreferrer"
+                        className="font-medium text-gray-900 dark:text-white text-sm hover:text-red-500 line-clamp-2">{video.title}</a>
                       <p className="text-xs text-gray-500 mt-1">{video.channel} · {video.published_at ? new Date(video.published_at).toLocaleDateString('pt-BR') : ''}</p>
-                      {video.ai_reasoning && (
-                        <p className="text-xs text-gray-400 italic mt-1">IA: {video.ai_reasoning}</p>
-                      )}
                     </div>
                   </div>
 

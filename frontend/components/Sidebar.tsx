@@ -15,7 +15,7 @@ const menuItems = [
   { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { path: '/pages-manager', label: 'Gerenciar Páginas', icon: FileText },
   { path: '/scraper', label: 'Rodar Coleta', icon: PlayCircle },
-  { path: '/discovery', label: 'Descoberta', icon: Zap },
+  { path: '/discovery', label: 'Minerar', icon: Zap },
   { path: '/telegram', label: 'Configurações', icon: Settings },
   { path: '/about', label: 'Sobre', icon: Info },
 ];
@@ -28,13 +28,17 @@ export default function Sidebar() {
     <aside className="w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col">
       {/* Logo */}
       <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-        <div className="flex items-center gap-3">
-          <div className="flex items-center justify-center p-1 bg-white dark:bg-gray-700 rounded-lg overflow-hidden border border-gray-100 dark:border-gray-600 shadow-sm">
-            <img src="/logo.png" alt="LinkPulse Logo" className="w-10 h-10 object-contain" />
+        <div className="flex flex-col items-center gap-3 text-center">
+          <div className="p-3 bg-white dark:bg-gray-800 rounded-2xl shadow-xl shadow-blue-500/10 border border-gray-100 dark:border-gray-700">
+            <img src="/logo.png" alt="LinkPulse Logo" className="w-16 h-16 object-contain hover:scale-105 transition-transform duration-300" />
           </div>
           <div>
-            <h1 className="text-xl font-bold text-gray-900 dark:text-white">LinkPulse</h1>
-            <p className="text-xs text-gray-500 dark:text-gray-400">Sistema de Monitoramento</p>
+            <p className="text-xs font-bold text-blue-600 dark:text-blue-400 uppercase tracking-widest">
+              LinkPulse IA
+            </p>
+            <p className="text-[10px] text-gray-400 dark:text-gray-500 mt-0.5">
+              Sistema de Monitoramento e Coleta
+            </p>
           </div>
         </div>
       </div>
@@ -49,10 +53,10 @@ export default function Sidebar() {
             <button
               key={item.path}
               onClick={() => router.push(item.path)}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all hover:-translate-y-0.5 duration-200 ${
                 isActive
-                  ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg'
-                  : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                  ? 'bg-gradient-to-r from-sky-400 to-blue-600 text-white shadow-lg shadow-blue-500/30'
+                  : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 hover:shadow-sm'
               }`}
             >
               <Icon className="w-5 h-5" />
@@ -65,7 +69,7 @@ export default function Sidebar() {
       {/* Footer */}
       <div className="p-4 border-t border-gray-200 dark:border-gray-700">
         <p className="text-xs text-center text-gray-500 dark:text-gray-400">
-          LinkPulse v1.0.0
+          LinkPulse v3.2
         </p>
       </div>
     </aside>

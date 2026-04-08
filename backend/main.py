@@ -66,6 +66,12 @@ app = FastAPI(
 # Configura CORS para permitir requisições do frontend
 # Em produção, aceita URL do frontend via variável de ambiente
 cors_origins = os.getenv("CORS_ORIGINS", "*").split(",")
+# Adiciona origens de produção conhecidas
+extra_origins = ["https://link-pulse-tau.vercel.app"]
+for origin in extra_origins:
+    if origin not in cors_origins:
+        cors_origins.append(origin)
+
 if cors_origins == ["*"] and os.getenv("FRONTEND_URL"):
     # Se FRONTEND_URL estiver definida, usa ela em vez de "*"
     cors_origins = [os.getenv("FRONTEND_URL")]
@@ -167,51 +173,10 @@ def write_log(message: str):
     except Exception:
         pass
 
-def send_telegram_message(link: str, source: str):
-    """Envia notificação para o Telegram"""
-    import requests
-    
-    # Prioriza variáveis de ambiente (padrão em PaaS como Render)
-    # Fallback para arquivo de configuração (desenvolvimento local)
-    token = os.getenv("TELEGRAM_BOT_TOKEN", "").strip()
-    chat_id = os.getenv("TELEGRAM_CHAT_ID", "").strip()
-    
-    # Se não tiver nas variáveis de ambiente, tenta arquivo de config
-    if not token or not chat_id:
-        config = load_config()
-        token = token or config.get("telegram", {}).get("bot_token", "").strip()
-        chat_id = chat_id or config.get("telegram", {}).get("chat_id", "").strip()
-    
-    if not token or not chat_id:
-        write_log("Telegram não configurado - pulando envio")
-        return False
-    
-    timestamp = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
-    msg = (
-        "*NOVO GRUPO ENCONTRADO!*\n\n"
-        f"*Campanha:* `{source}`\n"
-        f"*Link do Grupo:*\n`{link}`\n"
-        f"*Data/Hora:* {timestamp}\n\n"
-        "━━━━━━━━━━━━━━━━━━━━\n"
-        "*Monitoramento ativo*"
-    )
-    
-    url = f"https://api.telegram.org/bot{token}/sendMessage"
-    payload = {
-        "chat_id": chat_id,
-        "text": msg,
-        "parse_mode": "Markdown",
-        "disable_web_page_preview": True
-    }
-    
-    try:
-        response = requests.post(url, json=payload, timeout=10)
-        response.raise_for_status()
-        write_log(f"Telegram enviado: {link} (campanha: {source})")
-        return True
-    except Exception as e:
-        write_log(f"Erro ao enviar Telegram: {e}")
-        return False
+def send_telegram_message(link: str, source: str, link_type: str = "group", is_relaunch: bool = False):
+    """Envia notificação para o Telegram usando o serviço especializado"""
+    from backend.services.notifications.telegram import send_message
+    return send_message(link, source, link_type, is_relaunch)
 
 # ============================================================================
 # ENDPOINTS DA API
