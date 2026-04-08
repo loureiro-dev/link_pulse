@@ -32,9 +32,12 @@ ROOT = os.path.abspath(os.path.join(BACKEND_ROOT, ".."))
 SRC_ROOT = os.path.join(ROOT, "src")
 
 # Adiciona caminhos ao sys.path para permitir imports
-# Inclui backend/ para permitir imports de backend.*
-for p in [BACKEND_ROOT, ROOT, SRC_ROOT]:
-    if p not in sys.path:
+# Se o script está sendo rodado de dentro da pasta backend/, 
+# precisamos adicionar o diretório pai ao path.
+PARENT_DIR = os.path.dirname(BACKEND_ROOT)
+
+for p in [PARENT_DIR, BACKEND_ROOT, ROOT, SRC_ROOT]:
+    if p and p not in sys.path:
         sys.path.insert(0, p)
 
 # ============================
@@ -59,45 +62,43 @@ CONFIG_FILE = os.path.join(DATA_DIR, "config.json")
 LAST_RUN_FILE = os.path.join(DATA_DIR, "last_run.txt")
 LOGS_FILE = os.path.join(DATA_DIR, "logs.txt")
 
-# Inicializa o FastAPI
-app = FastAPI(
-    title="LinkPulse API",
-    description="API para monitoramento e coleta de links de grupos WhatsApp",
-    version="1.0.0"
-)
+# ============================================================================
+# FUNÇÕES AUXILIARES (DEFINIDAS ANTES DO SCHEDULER)
+# ============================================================================
 
-# Configura CORS para permitir requisições do frontend
-# Em produção, aceita URL do frontend via variável de ambiente
-cors_origins = os.getenv("CORS_ORIGINS", "*").split(",")
-# Adiciona origens de produção conhecidas
-extra_origins = ["https://link-pulse-tau.vercel.app"]
-for origin in extra_origins:
-    if origin not in cors_origins:
-        cors_origins.append(origin)
+def load_config():
+    """Carrega a configuração do Telegram do arquivo JSON"""
+    if not os.path.exists(CONFIG_FILE):
+        return {"telegram": {"bot_token": "", "chat_id": ""}}
+    try:
+        with open(CONFIG_FILE, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except Exception:
+        return {"telegram": {"bot_token": "", "chat_id": ""}}
 
-if cors_origins == ["*"] and os.getenv("FRONTEND_URL"):
-    # Se FRONTEND_URL estiver definida, usa ela em vez de "*"
-    cors_origins = [os.getenv("FRONTEND_URL")]
+def save_config(config: dict):
+    """Salva a configuração no arquivo JSON"""
+    try:
+        with open(CONFIG_FILE, "w", encoding="utf-8") as f:
+            json.dump(config, f, indent=4, ensure_ascii=False)
+        return True
+    except Exception as e:
+        print(f"Erro ao salvar config: {e}")
+        return False
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=cors_origins,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+def write_log(message: str):
+    """Escreve uma mensagem no arquivo de logs"""
+    try:
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        with open(LOGS_FILE, "a", encoding="utf-8") as f:
+            f.write(f"[{timestamp}] {message}\n")
+    except Exception:
+        pass
 
-# Inicializa o banco de dados (cria tabelas se não existirem)
-init_db()
-
-# Importa router de autenticação (login, registro)
-from backend.auth.routes import router as auth_router
-# Importa middleware de autenticação para proteger rotas
-from backend.auth.middleware import get_current_user
-
-# Flag para controlar proteção de rotas (para migração gradual)
-# Agora que o frontend está pronto, podemos proteger as rotas
-PROTECTED_ROUTES = True  # Frontend já está implementado
+def send_telegram_message(link: str, source: str, link_type: str = "group", is_relaunch: bool = False):
+    """Envia notificação para o Telegram usando o serviço especializado"""
+    from backend.services.notifications.telegram import send_message
+    return send_message(link, source, link_type, is_relaunch)
 
 # ============================================================================
 # AGENDADOR DE TAREFAS (SCHEDULER)
@@ -155,10 +156,39 @@ scheduler.add_job(
 scheduler.start()
 write_log("🚀 [Scheduler] Agendador iniciado (Jobs: 08:00, 14:00, 20:00 BRT)")
 
-# ============================================================================
-# MODELOS PYDANTIC PARA VALIDAÇÃO DE DADOS
-# ============================================================================
-# Modelos movidos para backend/models.py para evitar importações circulares
+# Inicializa o FastAPI
+app = FastAPI(
+    title="LinkPulse API",
+    description="API para monitoramento e coleta de links de grupos WhatsApp",
+    version="1.0.0"
+)
+
+# Configura CORS para permitir requisições do frontend
+cors_origins = os.getenv("CORS_ORIGINS", "*").split(",")
+extra_origins = ["https://link-pulse-tau.vercel.app"]
+for origin in extra_origins:
+    if origin not in cors_origins:
+        cors_origins.append(origin)
+
+if cors_origins == ["*"] and os.getenv("FRONTEND_URL"):
+    cors_origins = [os.getenv("FRONTEND_URL")]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=cors_origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Inicializa o banco de dados (cria tabelas se não existirem)
+init_db()
+
+# Importa router de autenticação (login, registro)
+from backend.auth.routes import router as auth_router
+# Importa middleware de autenticação para proteger rotas
+from backend.auth.middleware import get_current_user
+
 # Importa modelos de arquivo separado
 from backend.models import (
     LinkResponse,
@@ -169,50 +199,10 @@ from backend.models import (
 )
 
 # ============================================================================
-# FUNÇÕES AUXILIARES
-# ============================================================================
-# Funções utilitárias para gerenciamento de páginas, configuração e logs
-
-
-def load_config():
-    """Carrega a configuração do Telegram do arquivo JSON"""
-    if not os.path.exists(CONFIG_FILE):
-        return {"telegram": {"bot_token": "", "chat_id": ""}}
-    try:
-        with open(CONFIG_FILE, "r", encoding="utf-8") as f:
-            return json.load(f)
-    except Exception:
-        return {"telegram": {"bot_token": "", "chat_id": ""}}
-
-def save_config(config: dict):
-    """Salva a configuração no arquivo JSON"""
-    try:
-        with open(CONFIG_FILE, "w", encoding="utf-8") as f:
-            json.dump(config, f, indent=4, ensure_ascii=False)
-        return True
-    except Exception as e:
-        print(f"Erro ao salvar config: {e}")
-        return False
-
-def write_log(message: str):
-    """Escreve uma mensagem no arquivo de logs"""
-    try:
-        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        with open(LOGS_FILE, "a", encoding="utf-8") as f:
-            f.write(f"[{timestamp}] {message}\n")
-    except Exception:
-        pass
-
-def send_telegram_message(link: str, source: str, link_type: str = "group", is_relaunch: bool = False):
-    """Envia notificação para o Telegram usando o serviço especializado"""
-    from backend.services.notifications.telegram import send_message
-    return send_message(link, source, link_type, is_relaunch)
-
-# ============================================================================
 # ENDPOINTS DA API
 # ============================================================================
 
-# Inclui routers de autenticação e API (rotas organizadas por módulos)
+# Inclui routers de autenticação e API
 app.include_router(auth_router)
 
 # Importa routers de API organizados
@@ -248,19 +238,11 @@ async def root():
         "authentication": "enabled"
     }
 
-
 # ─── WEBHOOK DO BOT TELEGRAM ──────────────────────────────────────────────────
-# Endpoint público (sem auth JWT) que recebe mensagens do bot Telegram.
-# Quando você envia uma URL ao bot, ela é coletada automaticamente.
 from fastapi import Request as FastAPIRequest
 
 @app.post("/api/telegram/bot-webhook")
 async def telegram_bot_webhook(req: FastAPIRequest):
-    """
-    Recebe mensagens do bot Telegram (via webhook).
-    Se a mensagem contiver uma URL, ela é adicionada ao monitoramento
-    e scraped imediatamente em busca de grupos WhatsApp.
-    """
     import re
     try:
         body = await req.json()
@@ -299,7 +281,7 @@ async def telegram_bot_webhook(req: FastAPIRequest):
             if total_links > 0:
                 reply = f"✅ *{total_links} grupo(s) WhatsApp* encontrado(s) e salvos!\n\nURL(s) adicionadas ao monitoramento."
             else:
-                reply = f"🔍 URL recebida e adicionada ao monitoramento.\nNenhum grupo encontrado por enquanto (verificarei novamente no próximo ciclo)."
+                reply = f"🔍 URL recebida e adicionada ao monitoramento.\nNenhum grupo encontrado por enquanto."
 
             import requests as _req
             _req.post(
@@ -312,15 +294,7 @@ async def telegram_bot_webhook(req: FastAPIRequest):
 
     return {"ok": True}
 
-# Rotas removidas - agora estão organizadas em módulos separados:
-# - backend/api/links.py: GET /api/links, GET /api/stats
-# - backend/api/pages.py: GET/POST/DELETE /api/pages
-# - backend/api/scraper.py: POST /api/scraper/run, GET /api/scraper/last-run
-# - backend/api/settings.py: GET/POST /api/telegram/config, POST /api/telegram/test
-
 if __name__ == "__main__":
     import uvicorn
-    # Lê porta do ambiente (Render usa PORT) ou usa 8000 como padrão
     port = int(os.getenv("PORT", 8000))
     uvicorn.run(app, host="0.0.0.0", port=port)
-
