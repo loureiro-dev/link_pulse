@@ -5,6 +5,7 @@ import DuckDuckGoSection from "@/components/discovery/DuckDuckGoSection";
 import YoutubeSection from "@/components/discovery/YoutubeSection";
 import QuickCollectSection from "@/components/discovery/QuickCollectSection";
 import FacebookSection from "@/components/discovery/FacebookSection";
+import LogConsole from "@/components/LogConsole";
 
 type Tab = "quick" | "duckduckgo" | "youtube" | "facebook";
 
@@ -82,6 +83,11 @@ export default function DiscoveryPage() {
         {activeTab === "facebook" && <FacebookSection />}
         {activeTab === "duckduckgo" && <DuckDuckGoSection />}
         {activeTab === "youtube" && <YoutubeSection />}
+      </div>
+
+      {/* Console de Logs da Mineração */}
+      <div className="pt-8 border-t border-gray-100 dark:border-gray-800">
+        <LogConsole active={false} title="Monitor de Mineração IA" maxHeight="200px" />
       </div>
     </div>
   );

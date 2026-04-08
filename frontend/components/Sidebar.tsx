@@ -5,12 +5,14 @@ import { usePathname, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { 
   LayoutDashboard, 
-  FileText, 
-  PlayCircle, 
+  FileText,
+  PlayCircle,
   Zap,
   Settings,
   Info,
-  Link as LinkIcon
+  Link as LinkIcon,
+  HelpCircle,
+  Terminal
 } from 'lucide-react';
 
 const menuItems = [
@@ -19,6 +21,7 @@ const menuItems = [
   { path: '/scraper', label: 'Rodar Coleta', icon: PlayCircle },
   { path: '/discovery', label: 'Minerar', icon: Zap },
   { path: '/telegram', label: 'Configurações', icon: Settings },
+  { path: '/faq', label: 'FAQ / Ajuda', icon: HelpCircle },
   { path: '/about', label: 'Sobre', icon: Info },
 ];
 
@@ -29,8 +32,8 @@ export default function Sidebar() {
   return (
     <aside className="w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col">
       {/* Logo */}
-      <div className="p-8 border-b border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-900/20">
-        <div className="flex flex-col items-center gap-4 text-center">
+      <div className="p-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-900/20">
+        <div className="flex flex-col items-center text-center">
           <div className="w-full aspect-video relative flex items-center justify-center">
             <Image 
               src="/logo.png" 
@@ -38,14 +41,6 @@ export default function Sidebar() {
               fill
               className="object-contain hover:scale-105 transition-transform duration-300" 
             />
-          </div>
-          <div className="space-y-1">
-            <p className="text-sm font-black text-blue-600 dark:text-blue-400 uppercase tracking-[0.2em]">
-              LINKPULSE IA
-            </p>
-            <p className="text-[10px] font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wider">
-              Sistema de Monitoramento e Coleta
-            </p>
           </div>
         </div>
       </div>

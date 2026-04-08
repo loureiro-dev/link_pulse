@@ -248,21 +248,24 @@ app.include_router(auth_router)
 from backend.api.links import router as links_router
 from backend.api.pages import router as pages_router
 from backend.api.scraper import router as scraper_router
-from backend.api.settings import router as settings_router, router_telegram, router_youtube
+from backend.api.settings import router as settings_router, router_telegram, router_youtube, router_ai
+from backend.api.discovery import router as discovery_router
+from backend.api.logs import router as logs_router
 from backend.api.admin import router as admin_router
 from backend.api.profile import router as profile_router
-from backend.api.discovery import router as discovery_router
 
-# Inclui routers de API (todas as rotas /api/* são protegidas com JWT)
+# Inclui routers de API
 app.include_router(links_router)
 app.include_router(pages_router)
 app.include_router(scraper_router)
 app.include_router(settings_router)
 app.include_router(router_telegram)
 app.include_router(router_youtube)
+app.include_router(router_ai)
+app.include_router(discovery_router)
+app.include_router(logs_router)
 app.include_router(admin_router)
 app.include_router(profile_router)
-app.include_router(discovery_router)
 
 @app.get("/")
 async def root():

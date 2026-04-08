@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { runScraper, getLastRun, ScraperResponse } from '@/lib/api';
 import { PlayCircle, CheckCircle, AlertCircle, Clock, Loader2 } from 'lucide-react';
+import LogConsole from '@/components/LogConsole';
 
 export default function ScraperPage() {
   const [running, setRunning] = useState(false);
@@ -118,7 +119,7 @@ export default function ScraperPage() {
         </div>
       )}
 
-      {lastRun && (
+      {lastRun && !running && !result && (
         <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5">
           <div className="flex items-center gap-3">
             <Clock className="w-5 h-5 text-gray-400" />
@@ -127,6 +128,13 @@ export default function ScraperPage() {
               <p className="text-sm text-gray-500 dark:text-gray-400">{lastRun}</p>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Console de Logs */}
+      {(running || result) && (
+        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+          <LogConsole active={running} title="Log de Coleta em Tempo Real" />
         </div>
       )}
     </div>

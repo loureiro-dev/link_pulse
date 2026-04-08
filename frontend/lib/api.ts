@@ -471,6 +471,10 @@ export async function classifyUrl(url: string, title?: string): Promise<{
   return fetchApi('/api/ai/classify', { method: 'POST', body: JSON.stringify({ url, title }) });
 }
 
+export async function getRecentLogs(lines: number = 50): Promise<{ logs: string[] }> {
+  return fetchApi(`/api/logs/recent?lines=${lines}`);
+}
+
 // ─── YOUTUBE SETTINGS ─────────────────────────────────────────────────────────
 
 // Admin API
