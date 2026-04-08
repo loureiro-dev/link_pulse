@@ -16,6 +16,7 @@ from backend.main import load_config, save_config, write_log
 router = APIRouter(tags=["settings"])
 router_telegram = APIRouter(prefix="/api/telegram", tags=["settings"])
 router_youtube = APIRouter(prefix="/api/youtube", tags=["settings"])
+router_ai = APIRouter(prefix="/api/ai", tags=["settings"])
 
 
 # ─── TELEGRAM ─────────────────────────────────────────────────────────────────
@@ -182,3 +183,67 @@ async def validate_youtube_key(current_user: dict = Depends(get_current_user)):
         raise HTTPException(status_code=400, detail=result["message"])
 
     return {"success": True, "message": result["message"]}
+
+
+# ─── AI / GEMINI ──────────────────────────────────────────────────────────────
+
+class AiSaveRequest(BaseModel):
+    api_key: str
+    provider: str = "gemini"
+    min_confidence: float = 0.6
+    enabled: bool = True
+
+@router_ai.get("/config")
+async def get_ai_config(current_user: dict = Depends(get_current_user)):
+    config = load_config()
+    ai = config.get("ai", {})
+    key = ai.get("api_key", "")
+    return {
+        "configured": bool(key),
+        "enabled": ai.get("enabled", True),
+        "provider": ai.get("provider", "gemini"),
+        "min_confidence": ai.get("min_confidence", 0.6),
+        "api_key_preview": key[:6] + "..." if len(key) > 6 else key
+    }
+
+@router_ai.post("/save")
+async def save_ai_config(
+    data: AiSaveRequest,
+    current_user: dict = Depends(get_current_user),
+):
+    try:
+        config = load_config()
+        config["ai"] = {
+            "api_key": data.api_key.strip(),
+            "provider": data.provider,
+            "min_confidence": data.min_confidence,
+            "enabled": data.enabled
+        }
+        if save_config(config):
+            write_log(f"Configuração AI atualizada (user {current_user['id']})")
+            return {"success": True, "message": "Configurações de IA salvas com sucesso"}
+        raise HTTPException(status_code=500, detail="Erro ao salvar")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router_ai.post("/validate")
+async def validate_ai_key(current_user: dict = Depends(get_current_user)):
+    from backend.services.ai.google_gemini import GeminiService
+    
+    config = load_config()
+    ai_cfg = config.get("ai", {})
+    key = ai_cfg.get("api_key", "").strip()
+    
+    if not key:
+        raise HTTPException(status_code=400, detail="Chave AI não configurada")
+    
+    # Simples teste de conexão
+    try:
+        service = GeminiService(api_key=key)
+        # Tenta uma resposta mínima
+        response = service.model.generate_content("hello")
+        if response.text:
+            return {"success": True, "message": "Chave Gemini validada com sucesso!"}
+        return {"success": False, "message": "Sem resposta da API"}
+    except Exception as e:
+        return {"success": False, "message": f"Erro de validação: {str(e)}"}

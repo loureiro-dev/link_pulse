@@ -20,15 +20,20 @@ class GeminiService:
             return {"error": "Gemini API key not configured"}
 
         prompt = f"""
-        Analise os dados desta página de destino (Landing Page):
+        Analise os dados desta página de destino (Landing Page) para identificar se é um lançamento de infoproduto.
         Título: {title}
         Conteúdo: {content_snippet}
+
+        Busque especificamente por termos e gatilhos de lançamento como:
+        - "entrar no grupo vip", "workshop gratuito", "aprenda a", "live"
+        - "masterclass", "intensivo", "maratona", "evento online", "lista de espera"
+        - "primeiros passos", "fórmula de lançamento", "inscrição gratuita", "vagas limitadas", "aula exclusiva"
 
         Responda em JSON com os seguintes campos:
         - is_launch (boolean): Se a página parece ser uma captura de leads para lançamento de produto digital.
         - niche (string): O nicho do produto (ex: Finanças, Marketing, Saúde, etc).
         - product_name (string): O nome do produto ou evento.
-        - confidence (float): Nível de confiança da análise (0 a 1).
+        - confidence (float): Nível de confiança da análise (0 a 1). Atribua confiança > 0.8 se encontrar os termos acima.
         - summary (string): Breve resumo do que se trata.
 
         Responda APENAS o JSON.

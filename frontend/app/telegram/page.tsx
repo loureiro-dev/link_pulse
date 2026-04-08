@@ -1,10 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { getTelegramConfig, saveTelegramConfig, testTelegram, getYoutubeConfig, saveYoutubeApiKey, validateYoutubeKey } from '@/lib/api';
-import { CheckCircle, AlertCircle, Send, MessageSquare, Youtube, Settings } from 'lucide-react';
+import { getTelegramConfig, saveTelegramConfig, testTelegram, getYoutubeConfig, saveYoutubeApiKey, validateYoutubeKey, getAiConfig, saveAiConfig, validateAiKey } from '@/lib/api';
+import { CheckCircle, AlertCircle, Send, MessageSquare, Youtube, Settings, Brain, Zap } from 'lucide-react';
 
-type Tab = 'telegram' | 'youtube';
+type Tab = 'telegram' | 'youtube' | 'ai';
 
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState<Tab>('telegram');
@@ -45,10 +45,22 @@ export default function SettingsPage() {
           <Youtube className="w-4 h-4" />
           YouTube API
         </button>
+        <button
+          onClick={() => setActiveTab('ai')}
+          className={`flex items-center gap-2 px-5 py-3 rounded-xl border-2 text-sm font-semibold transition-all ${
+            activeTab === 'ai'
+              ? 'border-indigo-500 bg-indigo-50 text-indigo-700'
+              : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
+          }`}
+        >
+          <Brain className="w-4 h-4" />
+          IA / Gemini
+        </button>
       </div>
 
       {activeTab === 'telegram' && <TelegramTab />}
       {activeTab === 'youtube' && <YoutubeTab />}
+      {activeTab === 'ai' && <AiTab />}
     </div>
   );
 }
@@ -290,6 +302,172 @@ function YoutubeTab() {
               {validating ? 'Validando...' : 'Validar Chave'}
             </button>
           )}
+        </div>
+      </form>
+    </div>
+  );
+}
+
+/* ─── ABA AI / GEMINI ─── */
+function AiTab() {
+  const [config, setConfig] = useState({ 
+    api_key: '', 
+    provider: 'gemini', 
+    min_confidence: 0.6, 
+    enabled: true 
+  });
+  const [configured, setConfigured] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [validating, setValidating] = useState(false);
+  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+
+  useEffect(() => {
+    getAiConfig()
+      .then((d) => {
+        setConfigured(d.configured);
+        setConfig({
+          api_key: d.api_key_preview || '',
+          provider: d.provider || 'gemini',
+          min_confidence: d.min_confidence || 0.6,
+          enabled: d.enabled !== false
+        });
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
+
+  const handleSave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSaving(true);
+    setMessage(null);
+    try {
+      await saveAiConfig(config);
+      setConfigured(true);
+      setMessage({ type: 'success', text: 'Configurações de IA salvas!' });
+    } catch (err: unknown) {
+      setMessage({ type: 'error', text: err instanceof Error ? err.message : 'Erro ao salvar' });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleValidate = async () => {
+    setValidating(true);
+    setMessage(null);
+    try {
+      const res = await validateAiKey();
+      setMessage({ type: res.success ? 'success' : 'error', text: res.message });
+    } catch (err: unknown) {
+      setMessage({ type: 'error', text: err instanceof Error ? err.message : 'Erro na validação' });
+    } finally {
+      setValidating(false);
+    }
+  };
+
+  if (loading) return <div className="text-gray-500 text-sm py-8 text-center">Carregando...</div>;
+
+  return (
+    <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 space-y-5">
+      <div className="flex items-center gap-3">
+        <div className="p-2 bg-indigo-600 rounded-lg">
+          <Brain className="w-5 h-5 text-white" />
+        </div>
+        <div>
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Inteligência Artificial (Gemini)</h2>
+          {configured && (
+            <span className="text-xs text-green-600 font-medium">✅ Configurada</span>
+          )}
+        </div>
+      </div>
+
+      <div className="bg-indigo-50 border border-indigo-200 rounded-xl p-4 text-sm text-indigo-800 space-y-3">
+        <div className="flex items-center gap-2 font-semibold">
+          <Zap className="w-4 h-4" />
+          Como funciona a Mineração Seletiva:
+        </div>
+        <p>
+          A IA analisa as páginas e anúncios encontrados em tempo real. Ela busca por gatilhos de lançamentos 
+          digitais como <strong>"grupo vip"</strong>, <strong>"workshop"</strong> e <strong>"masterclass"</strong>.
+        </p>
+        <p className="text-xs opacity-75 italic">
+          * A mineração consome tokens da sua cota do Gemini (versão 1.5-flash é gratuita até certo limite).
+        </p>
+      </div>
+
+      <form onSubmit={handleSave} className="space-y-4">
+        <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-900/50 rounded-lg border border-gray-200 dark:border-gray-700">
+          <input
+            type="checkbox"
+            id="ai_enabled"
+            checked={config.enabled}
+            onChange={(e) => setConfig({ ...config, enabled: e.target.checked })}
+            className="w-5 h-5 text-indigo-600 rounded focus:ring-indigo-500"
+          />
+          <label htmlFor="ai_enabled" className="text-sm font-semibold text-gray-700 dark:text-gray-300 cursor-pointer">
+            Ativar Mineração Seletiva e Classificação de Nichos
+          </label>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Chave de API do Gemini</label>
+          <input
+            type="password"
+            value={config.api_key}
+            onChange={(e) => setConfig({ ...config, api_key: e.target.value })}
+            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+            placeholder={configured ? '••••••••••••••••' : 'AIzaSy...'}
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            Nível de Confiança Mínimo: {(config.min_confidence * 100).toFixed(0)}%
+          </label>
+          <input
+            type="range"
+            min="0"
+            max="1"
+            step="0.05"
+            value={config.min_confidence}
+            onChange={(e) => setConfig({ ...config, min_confidence: parseFloat(e.target.value) })}
+            className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
+          />
+          <div className="flex justify-between text-[10px] text-gray-500 px-1 mt-1">
+            <span>Mais resultados (menos preciso)</span>
+            <span>Mais seletivo (mais preciso)</span>
+          </div>
+        </div>
+
+        {message && (
+          <div className={`p-4 rounded-lg flex items-start gap-3 ${
+            message.type === 'success' ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'
+          }`}>
+            {message.type === 'success'
+              ? <CheckCircle className="w-5 h-5 text-green-600 mt-0.5" />
+              : <AlertCircle className="w-5 h-5 text-red-600 mt-0.5" />}
+            <p className={`text-sm ${message.type === 'success' ? 'text-green-800' : 'text-red-800'}`}>
+              {message.text}
+            </p>
+          </div>
+        )}
+
+        <div className="flex gap-3">
+          <button
+            type="submit"
+            disabled={saving}
+            className="flex-1 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium shadow-md shadow-indigo-200 transition-all disabled:opacity-50"
+          >
+            {saving ? 'Salvando...' : 'Salvar Configurações'}
+          </button>
+          <button
+            type="button"
+            onClick={handleValidate}
+            disabled={validating || !config.api_key}
+            className="flex-1 px-4 py-2 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 rounded-lg font-medium transition-colors disabled:opacity-50"
+          >
+            {validating ? 'Validando...' : 'Testar Conexão'}
+          </button>
         </div>
       </form>
     </div>

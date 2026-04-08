@@ -12,6 +12,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List, Optional
 from dotenv import load_dotenv
+from apscheduler.schedulers.background import BackgroundScheduler
+from apscheduler.triggers.cron import CronTrigger
+import pytz
 
 load_dotenv()
 
@@ -95,6 +98,62 @@ from backend.auth.middleware import get_current_user
 # Flag para controlar proteção de rotas (para migração gradual)
 # Agora que o frontend está pronto, podemos proteger as rotas
 PROTECTED_ROUTES = True  # Frontend já está implementado
+
+# ============================================================================
+# AGENDADOR DE TAREFAS (SCHEDULER)
+# ============================================================================
+
+def run_automated_scrapers():
+    """
+    Tarefa executada pelo scheduler para coletar links de todas as páginas 
+    de todos os usuários.
+    """
+    write_log("🕒 [Scheduler] Iniciando coleta automática de rotina...")
+    
+    from backend.db.users import list_all_users
+    from backend.db.pages import load_pages
+    from backend.api.scraper import run_scraper_logic
+    
+    try:
+        # Pega todos os usuários aprovados
+        users = list_all_users(include_pending=False)
+        total_pages = 0
+        total_links = 0
+        
+        for user in users:
+            user_id = user["id"]
+            pages = load_pages(user_id)
+            for page in pages:
+                total_pages += 1
+                try:
+                    # Executa a lógica de coleta para a página
+                    # O run_scraper_logic já salva no banco e envia pro Telegram
+                    result = run_scraper_logic(page["url"], page["name"], user_id)
+                    total_links += result.get("links_found", 0)
+                except Exception as e:
+                    write_log(f"❌ [Scheduler] Erro na página {page['name']}: {e}")
+                    
+        write_log(f"✅ [Scheduler] Finalizado: {total_pages} página(s) processada(s), {total_links} links novos.")
+        
+    except Exception as e:
+        write_log(f"🚨 [Scheduler] Erro crítico no ciclo automático: {e}")
+
+# Inicializa o agendador
+scheduler = BackgroundScheduler()
+# Define o fuso horário de Brasília
+br_timezone = pytz.timezone('America/Sao_Paulo')
+
+# Agenda as coletas (08h, 14h, 20h)
+scheduler.add_job(
+    run_automated_scrapers,
+    CronTrigger(hour='8,14,20', minute='0', timezone=br_timezone),
+    id='automated_collect',
+    replace_existing=True
+)
+
+# Inicia o scheduler
+scheduler.start()
+write_log("🚀 [Scheduler] Agendador iniciado (Jobs: 08:00, 14:00, 20:00 BRT)")
 
 # ============================================================================
 # MODELOS PYDANTIC PARA VALIDAÇÃO DE DADOS
