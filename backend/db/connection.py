@@ -13,8 +13,12 @@ def init_db():
     Verifica conexão com Supabase e cria usuário admin padrão se necessário.
     As tabelas já devem existir (criadas via SQL Editor no Supabase).
     """
-    from backend.db.users import _ensure_admin_exists
-    _ensure_admin_exists()
+    try:
+        from backend.db.users import _ensure_admin_exists
+        _ensure_admin_exists()
+    except Exception as e:
+        print(f"\n[AVISO] Não foi possível inicializar o banco de dados (admin): {e}")
+        print("Isso geralmente ocorre se as variáveis do Supabase não estiverem configuradas.\n")
 
 
 def save_links(links: List[str], source: str = "unknown", user_id: int = 1) -> None:

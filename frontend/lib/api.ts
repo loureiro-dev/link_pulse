@@ -445,3 +445,16 @@ export async function rejectUser(userId: number): Promise<{ message: string }> {
     method: 'DELETE',
   });
 }
+
+// ─── DISCOVERY: CUSTOM QUERIES ──────────────────────────────────────────────
+
+export async function getCustomQueries(module: string): Promise<{ module: string, queries: string[] }> {
+  return fetchApi(`/api/discovery/custom-queries?module=${module}`);
+}
+
+export async function saveCustomQueries(module: string, queries: string[]): Promise<{ success: boolean }> {
+  return fetchApi('/api/discovery/custom-queries', {
+    method: 'POST',
+    body: JSON.stringify({ module, queries }),
+  });
+}
