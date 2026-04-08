@@ -398,6 +398,42 @@ export async function runFacebookLibraryDiscovery(opts: {
   return fetchApi('/api/discovery/facebook-library', { method: 'POST', body: JSON.stringify(opts) });
 }
 
+// ─── DISCOVERY: QUICK COLLECT ───────────────────────────────────────────────
+
+export interface QuickResult {
+  url: string;
+  name: string;
+  page_added: boolean;
+  links_found: number;
+  links: string[];
+  success: boolean;
+  message: string;
+}
+
+export interface QuickResponse {
+  success: boolean;
+  urls_processed: number;
+  total_links_found: number;
+  results: QuickResult[];
+  message: string;
+}
+
+export async function runQuickCollect(data: {
+  urls: string[];
+  source_name?: string;
+  add_to_pages?: boolean;
+}): Promise<QuickResponse> {
+  return fetchApi('/api/discovery/quick', { method: 'POST', body: JSON.stringify(data) });
+}
+
+export async function setTelegramWebhook(): Promise<{ success: boolean; message: string }> {
+  return fetchApi('/api/telegram/set-webhook', { method: 'POST' });
+}
+
+export async function removeTelegramWebhook(): Promise<{ success: boolean; message: string }> {
+  return fetchApi('/api/telegram/set-webhook', { method: 'DELETE' });
+}
+
 // ─── AI SETTINGS ──────────────────────────────────────────────────────────────
 
 export interface AiConfig {

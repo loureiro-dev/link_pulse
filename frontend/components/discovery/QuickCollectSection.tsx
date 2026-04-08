@@ -1,25 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { getAuthToken } from "@/lib/auth";
-
-interface QuickResult {
-  url: string;
-  name: string;
-  page_added: boolean;
-  links_found: number;
-  links: string[];
-  success: boolean;
-  message: string;
-}
-
-interface QuickResponse {
-  success: boolean;
-  urls_processed: number;
-  total_links_found: number;
-  results: QuickResult[];
-  message: string;
-}
+import { 
+  runQuickCollect, 
+  setTelegramWebhook, 
+  removeTelegramWebhook,
+  QuickResponse 
+} from "@/lib/api";
 
 export default function QuickCollectSection() {
   const [urlInput, setUrlInput] = useState("");
@@ -30,7 +17,6 @@ export default function QuickCollectSection() {
   const [error, setError] = useState<string | null>(null);
 
   // Webhook Telegram
-  const [backendUrl, setBackendUrl] = useState("");
   const [webhookStatus, setWebhookStatus] = useState<"idle" | "loading" | "ok" | "error">("idle");
   const [webhookMsg, setWebhookMsg] = useState("");
 
@@ -50,26 +36,11 @@ export default function QuickCollectSection() {
     setResult(null);
 
     try {
-      const token = getAuthToken();
-      const res = await fetch("http://localhost:8000/api/discovery/quick", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          urls: lines,
-          source_name: sourceName || "Envio Manual",
-          add_to_pages: addToPages,
-        }),
+      const data = await runQuickCollect({
+        urls: lines,
+        source_name: sourceName || "Envio Manual",
+        add_to_pages: addToPages,
       });
-
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.detail || "Erro na coleta");
-      }
-
-      const data: QuickResponse = await res.json();
       setResult(data);
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Erro inesperado");
@@ -82,18 +53,13 @@ export default function QuickCollectSection() {
     setWebhookStatus("loading");
     setWebhookMsg("");
     try {
-      const token = getAuthToken();
-      const res = await fetch("http://localhost:8000/api/telegram/set-webhook", {
-        method: "POST",
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const data = await res.json();
+      const data = await setTelegramWebhook();
       if (data.success) {
         setWebhookStatus("ok");
         setWebhookMsg(data.message);
       } else {
         setWebhookStatus("error");
-        setWebhookMsg(data.detail || "Erro ao ativar webhook");
+        setWebhookMsg("Erro ao ativar webhook");
       }
     } catch (e: unknown) {
       setWebhookStatus("error");
@@ -104,14 +70,9 @@ export default function QuickCollectSection() {
   async function handleRemoveWebhook() {
     setWebhookStatus("loading");
     try {
-      const token = getAuthToken();
-      const res = await fetch("http://localhost:8000/api/telegram/set-webhook", {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const data = await res.json();
+      const data = await removeTelegramWebhook();
       setWebhookStatus(data.success ? "idle" : "error");
-      setWebhookMsg(data.success ? "Webhook removido." : data.detail || "Erro");
+      setWebhookMsg(data.success ? "Webhook removido." : "Erro ao remover webhook");
     } catch {
       setWebhookStatus("error");
       setWebhookMsg("Erro ao remover webhook");
@@ -272,7 +233,7 @@ export default function QuickCollectSection() {
               Adicione <code className="bg-blue-100 px-1 rounded">BACKEND_URL=https://seu-backend.com</code> no{" "}
               <code className="bg-blue-100 px-1 rounded">.env</code> (precisa ser acessível pela internet).
             </li>
-            <li>Clique em <strong>"Ativar Webhook"</strong> abaixo.</li>
+            <li>Clique em <strong>&quot;Ativar Webhook&quot;</strong> abaixo.</li>
             <li>Envie qualquer URL para o bot no Telegram — ele coleta e responde!</li>
           </ol>
 

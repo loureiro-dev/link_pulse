@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { getPendingUsers, getAllUsers, approveUser, rejectUser, User } from '@/lib/api';
 import { Shield, Check, X, Users, UserCheck, UserX, AlertCircle } from 'lucide-react';
 import { useRouter } from 'next/navigation';
@@ -16,43 +16,34 @@ export default function AdminPage() {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [showAllUsers, setShowAllUsers] = useState(false);
 
-  useEffect(() => {
-    checkAdminAccess();
-  }, []);
-
-  const checkAdminAccess = async () => {
+  const checkAdminAccess = useCallback(async () => {
     try {
       const user = await getCurrentUser();
       console.log('Admin page - Current user:', user);
-      console.log('Admin page - is_admin:', user?.is_admin);
-      console.log('Admin page - is_admin type:', typeof user?.is_admin);
-      console.log('Admin page - is_admin truthy?', !!user?.is_admin);
       
       if (!user) {
-        console.log('Admin page - No user, redirecting to login');
         router.push('/login');
         return;
       }
       
-      // Check is_admin - handle both boolean and number (1/0)
       const isAdmin = user.is_admin === true || (typeof user.is_admin === 'number' && user.is_admin === 1) || (typeof user.is_admin === 'string' && user.is_admin === '1');
-      console.log('Admin page - Final isAdmin check:', isAdmin);
       
       if (!isAdmin) {
-        console.log('Admin page - User is not admin, redirecting to dashboard');
-        console.log('Admin page - User object:', JSON.stringify(user, null, 2));
         router.push('/dashboard');
         return;
       }
       
-      console.log('Admin page - User is admin, loading users');
       setCurrentUser(user);
       loadUsers();
     } catch (err) {
       console.error('Admin page - Error checking access:', err);
       router.push('/dashboard');
     }
-  };
+  }, [router]);
+
+  useEffect(() => {
+    checkAdminAccess();
+  }, [checkAdminAccess]);
 
   const loadUsers = async () => {
     try {

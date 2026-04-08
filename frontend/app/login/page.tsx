@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
+import { useState, useEffect, useCallback, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import Image from 'next/image';
 import { login } from '@/lib/auth';
 import { isAuthenticated } from '@/lib/auth';
 
@@ -42,7 +43,7 @@ function LoginForm() {
       
       {/* Background Gigante Logo */}
       <div className="absolute inset-0 z-0 flex items-center justify-center opacity-5 dark:opacity-10 pointer-events-none">
-        <img src="/logo.png" alt="" className="w-[80vw] max-w-[800px] object-contain scale-125 blur-[2px]" />
+        <Image src="/logo.png" alt="" width={800} height={800} className="w-[80vw] max-w-[800px] object-contain scale-125 blur-[2px]" />
       </div>
 
       <div className="max-w-md w-full space-y-8 z-10 relative bg-white/70 dark:bg-gray-800/80 backdrop-blur-xl p-10 rounded-2xl shadow-2xl border border-white/20 dark:border-gray-700/50">
@@ -50,7 +51,7 @@ function LoginForm() {
           <div className="flex justify-center mb-6">
             <div className="w-20 h-20 bg-gradient-to-br from-sky-400 to-blue-600 rounded-2xl shadow-lg p-0.5">
               <div className="w-full h-full bg-white dark:bg-gray-800 rounded-[14px] flex items-center justify-center p-2">
-                <img src="/logo.png" alt="Logo" className="w-full h-full object-contain" />
+                <Image src="/logo.png" alt="Logo" width={64} height={64} className="w-full h-full object-contain" />
               </div>
             </div>
           </div>

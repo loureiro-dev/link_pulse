@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Plus, X, Loader2, Save, RefreshCw } from 'lucide-react';
 import { getCustomQueries, saveCustomQueries } from '@/lib/api';
 
@@ -17,11 +17,7 @@ export default function KeywordManager({ module, label, defaultQueries }: Keywor
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
 
-  useEffect(() => {
-    loadQueries();
-  }, [module]);
-
-  const loadQueries = async () => {
+  const loadQueries = useCallback(async () => {
     setLoading(true);
     try {
       const data = await getCustomQueries(module);
@@ -31,7 +27,11 @@ export default function KeywordManager({ module, label, defaultQueries }: Keywor
     } finally {
       setLoading(false);
     }
-  };
+  }, [module]);
+
+  useEffect(() => {
+    loadQueries();
+  }, [loadQueries]);
 
   const handleAdd = (e: React.FormEvent) => {
     e.preventDefault();

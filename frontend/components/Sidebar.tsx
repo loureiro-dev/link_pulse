@@ -1,6 +1,8 @@
 'use client';
 
+import { useCallback } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
+import Image from 'next/image';
 import { 
   LayoutDashboard, 
   FileText, 
@@ -30,7 +32,7 @@ export default function Sidebar() {
       <div className="p-6 border-b border-gray-200 dark:border-gray-700">
         <div className="flex flex-col items-center gap-3 text-center">
           <div className="p-3 bg-white dark:bg-gray-800 rounded-2xl shadow-xl shadow-blue-500/10 border border-gray-100 dark:border-gray-700">
-            <img src="/logo.png" alt="LinkPulse Logo" className="w-16 h-16 object-contain hover:scale-105 transition-transform duration-300" />
+            <Image src="/logo.png" alt="LinkPulse Logo" width={64} height={64} className="w-16 h-16 object-contain hover:scale-105 transition-transform duration-300" />
           </div>
           <div>
             <p className="text-xs font-bold text-blue-600 dark:text-blue-400 uppercase tracking-widest">
