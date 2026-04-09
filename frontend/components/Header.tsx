@@ -1,6 +1,6 @@
 'use client';
 
-import { Bell, Settings, User, LogOut, Shield } from 'lucide-react';
+import { Bell, Settings, User, Shield } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { logout, getCurrentUser } from '@/lib/auth';
 import { useEffect, useState } from 'react';
@@ -64,13 +64,6 @@ export default function Header() {
           >
             <User className="w-5 h-5" />
           </Link>
-          <button
-            onClick={handleLogout}
-            className="p-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-            title="Sair"
-          >
-            <LogOut className="w-5 h-5" />
-          </button>
         </div>
       </div>
     </header>
