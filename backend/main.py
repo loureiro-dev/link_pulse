@@ -168,52 +168,74 @@ except Exception as e:
 # ROTAS / API
 # ============================
 
+# ============================
+# ROTAS / API
+# ============================
+
 @app.get("/")
 async def root():
-    return {"status": "online", "service": "LinkPulse API"}
+    return {
+        "status": "online", 
+        "service": "LinkPulse API",
+        "timestamp": datetime.now().isoformat()
+    }
+
+@app.get("/api/health")
+async def health():
+    return {"status": "ok", "timestamp": datetime.now().isoformat()}
+
+@app.get("/api/debug-routes")
+async def debug_routes():
+    """Retorna todas as rotas registradas no sistema para diagnóstico."""
+    routes = []
+    for route in app.routes:
+        if hasattr(route, "path"):
+            routes.append({
+                "path": route.path,
+                "name": route.name,
+                "methods": list(route.methods) if hasattr(route, "methods") else []
+            })
+    return {"total": len(routes), "routes": routes}
 
 # Wrapper de importação robusta
 def include_pulse_routers(app_instance):
-    try:
-        # Tenta com prefixo backend.
-        try:
-            from backend.auth.routes import router as auth_router
-            from backend.api.links import router as links_router
-            from backend.api.pages import router as pages_router
-            from backend.api.scraper import router as scraper_router
-            from backend.api.settings import router as settings_router, router_telegram, router_youtube, router_ai
-            from backend.api.discovery import router as discovery_router
-            from backend.api.logs import router as logs_router
-            from backend.api.admin import router as admin_router
-            from backend.api.profile import router as profile_router
-        except ImportError:
-            # Tenta sem prefixo
-            from auth.routes import router as auth_router
-            from api.links import router as links_router
-            from api.pages import router as pages_router
-            from api.scraper import router as scraper_router
-            from api.settings import router as settings_router, router_telegram, router_youtube, router_ai
-            from api.discovery import router as discovery_router
-            from api.logs import router as logs_router
-            from api.admin import router as admin_router
-            from api.profile import router as profile_router
+    write_log("🔧 [API] Iniciando carregamento dos roteadores...")
+    
+    # Lista de roteadores a importar e incluir com seus respectivos prefixos
+    # Formato: (nome_module, router_attr_name, prefix)
+    routers_to_include = [
+        ('auth.routes', 'router', '/auth'),
+        ('api.links', 'router', '/api'),
+        ('api.pages', 'router', '/api'),
+        ('api.scraper', 'router', '/api'),
+        ('api.settings', 'router', '/api'),
+        ('api.settings', 'router_telegram', '/api/telegram'),
+        ('api.settings', 'router_youtube', '/api/youtube'),
+        ('api.settings', 'router_ai', '/api/ai'),
+        ('api.discovery', 'router', '/api/discovery'),
+        ('api.logs', 'router', '/api'),
+        ('api.admin', 'router', '/api'),
+        ('api.profile', 'router', '/api'),
+    ]
 
-        # Include all
-        app_instance.include_router(auth_router)
-        app_instance.include_router(links_router)
-        app_instance.include_router(pages_router)
-        app_instance.include_router(scraper_router)
-        app_instance.include_router(settings_router)
-        app_instance.include_router(router_telegram)
-        app_instance.include_router(router_youtube)
-        app_instance.include_router(router_ai)
-        app_instance.include_router(discovery_router)
-        app_instance.include_router(logs_router)
-        app_instance.include_router(admin_router)
-        app_instance.include_router(profile_router)
-    except Exception as e:
-        print(f"Erro ao incluir routers: {e}")
-        write_log(f"Erro ao incluir routers: {e}")
+    for module_name, attr_name, prefix in routers_to_include:
+        try:
+            # Tenta importar com prefixo backend. (contexto local)
+            full_module_name = f"backend.{module_name}"
+            try:
+                module = __import__(full_module_name, fromlist=[attr_name])
+            except ImportError:
+                # Tenta importar direto (contexto render)
+                module = __import__(module_name, fromlist=[attr_name])
+            
+            router = getattr(module, attr_name)
+            app_instance.include_router(router, prefix=prefix)
+            write_log(f"✅ [API] Router '{module_name}.{attr_name}' montado em '{prefix}'")
+            
+        except Exception as e:
+            msg = f"❌ [API] ERRO ao carregar roteador {module_name}.{attr_name}: {e}"
+            print(msg)
+            write_log(msg)
 
 include_pulse_routers(app)
 

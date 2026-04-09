@@ -8,16 +8,13 @@ from typing import List
 try:
     from backend.auth.middleware import get_current_user
     from backend.db.connection import list_links
-    from backend.main import LAST_RUN_FILE
+    from backend.models import LinkResponse
 except ImportError:
     from auth.middleware import get_current_user
     from db.connection import list_links
-    from main import LAST_RUN_FILE
-from backend.models import LinkResponse
-import os
-from datetime import datetime
+    from models import LinkResponse
 
-router = APIRouter(prefix="/api", tags=["links"])
+router = APIRouter(tags=["links"])
 
 from backend.main import LAST_RUN_FILE
 

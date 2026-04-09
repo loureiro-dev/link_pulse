@@ -19,9 +19,9 @@ except ImportError:
     from main import load_config, save_config, write_log
 
 router = APIRouter(tags=["settings"])
-router_telegram = APIRouter(prefix="/api/telegram", tags=["settings"])
-router_youtube = APIRouter(prefix="/api/youtube", tags=["settings"])
-router_ai = APIRouter(prefix="/api/ai", tags=["settings"])
+router_telegram = APIRouter(tags=["settings"])
+router_youtube = APIRouter(tags=["settings"])
+router_ai = APIRouter(tags=["settings"])
 
 
 # ─── TELEGRAM ─────────────────────────────────────────────────────────────────

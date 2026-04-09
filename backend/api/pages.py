@@ -13,12 +13,10 @@ except ImportError:
     from db.pages import load_pages, add_page, delete_page
 try:
     from backend.models import PageRequest, PageResponse
-    from backend.main import write_log
 except ImportError:
     from models import PageRequest, PageResponse
-    from main import write_log
 
-router = APIRouter(prefix="/api", tags=["pages"])
+router = APIRouter(tags=["pages"])
 
 
 @router.get("/pages", response_model=List[PageResponse])

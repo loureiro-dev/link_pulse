@@ -23,7 +23,7 @@ except ImportError:
     from db.pages import add_page
     from db.settings import get_setting, save_setting
 
-router = APIRouter(prefix="/api/discovery", tags=["discovery"])
+router = APIRouter(tags=["discovery"])
 
 
 # ─── GESTÃO DE KEYWORDS CUSTOMIZADAS ─────────────────────────────────────────

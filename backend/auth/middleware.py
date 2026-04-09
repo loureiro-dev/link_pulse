@@ -6,8 +6,12 @@ Protects routes by validating JWT tokens
 from fastapi import HTTPException, status, Depends
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from typing import Optional
-from backend.auth.jwt import decode_access_token
-from backend.db.users import get_user_by_id, get_user_by_email
+try:
+    from backend.auth.jwt import decode_access_token
+    from backend.db.users import get_user_by_id, get_user_by_email
+except ImportError:
+    from auth.jwt import decode_access_token
+    from db.users import get_user_by_id, get_user_by_email
 
 security = HTTPBearer()
 
