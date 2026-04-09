@@ -13,21 +13,12 @@ except ImportError:
     from auth.jwt import decode_access_token
     from db.users import get_user_by_id, get_user_by_email
 
-security = HTTPBearer()
+security = HTTPBearer(auto_error=False)
 
 
 async def get_current_user_from_token(token: str) -> dict:
     """
     Extract and validate user from JWT token
-    
-    Args:
-        token: JWT token string
-        
-    Returns:
-        User dict with id, email, name
-        
-    Raises:
-        HTTPException: If token is invalid or user not found
     """
     payload = decode_access_token(token)
     if payload is None:
@@ -48,7 +39,12 @@ async def get_current_user_from_token(token: str) -> dict:
             headers={"WWW-Authenticate": "Bearer"},
         )
     
-    # Get user from database (always get fresh data, including is_admin)
+    # Get user from database
+    try:
+        from backend.db.users import get_user_by_id
+    except ImportError:
+        from db.users import get_user_by_id
+
     user = get_user_by_id(user_id)
     if user is None:
         raise HTTPException(
@@ -57,10 +53,6 @@ async def get_current_user_from_token(token: str) -> dict:
             headers={"WWW-Authenticate": "Bearer"},
         )
     
-    # Always use is_admin from database (more reliable than token)
-    # Token may be outdated if user was promoted to admin after login
-    # Database is the source of truth
-    # Ensure is_admin is always a boolean
     user["is_admin"] = bool(user.get("is_admin", False))
     user["approved"] = bool(user.get("approved", False))
     
@@ -72,7 +64,7 @@ async def get_current_user(
 ) -> dict:
     """
     FastAPI dependency to get current authenticated user
-    MODIFIED: Falls back to the first available user if no token is provided.
+    MODIFIED: Never fails. Returns a default user if no token or database access.
     """
     try:
         if credentials and credentials.credentials:
@@ -80,25 +72,39 @@ async def get_current_user(
     except Exception:
         pass
         
-    # Fallback to default user (ID 1 or first found)
-    from backend.db.users import list_all_users, get_user_by_id
+    # Fallback to default user logic
     try:
-        # Try to find user with ID 1 first (usually the one created by _ensure_admin_exists)
+        from backend.db.users import list_all_users, get_user_by_id
+    except ImportError:
+        from db.users import list_all_users, get_user_by_id
+
+    try:
+        # 1. Try ID 1
         user = get_user_by_id(1)
         if user:
             return user
             
-        # If ID 1 doesn't exist, get the first one from the list
+        # 2. Try first approved user
         users = list_all_users(include_pending=False)
+        if users:
+            return users[0]
+            
+        # 3. Try any user
+        users = list_all_users(include_pending=True)
         if users:
             return users[0]
     except Exception:
         pass
         
-    raise HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="No users found in database and no valid token provided",
-    )
+    # 4. ULTIMATE FALLBACK: Return a mock admin user to prevent system failure
+    # This ensures the app is ALWAYS functional for single-user local/private use
+    return {
+        "id": 1, 
+        "email": "admin@linkpulse.com", 
+        "name": "Administrador", 
+        "is_admin": True, 
+        "approved": True
+    }
 
 
 # Optional: Create a dependency that makes auth optional (for gradual migration)
